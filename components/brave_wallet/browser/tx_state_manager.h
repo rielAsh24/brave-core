@@ -24,19 +24,28 @@ namespace base {
 class Value;
 }  // namespace base
 
+namespace value_store {
+class ValueStoreFrontend;
+}  // namespace value_store
+
 namespace brave_wallet {
 
 class TxMeta;
 
 class TxStateManager {
  public:
-  explicit TxStateManager(PrefService* prefs);
+  TxStateManager(PrefService* prefs, value_store::ValueStoreFrontend* store);
   virtual ~TxStateManager();
   TxStateManager(const TxStateManager&) = delete;
 
+  using GetTxCallback = base::OnceCallback<void(std::unique_ptr<TxMeta>)>;
+  using GetTxsByStatusCallback =
+      base::OnceCallback<void(std::vector<std::unique_ptr<TxMeta>>)>;
+
   void AddOrUpdateTx(const TxMeta& meta);
-  std::unique_ptr<TxMeta> GetTx(const std::string& chain_id,
-                                const std::string& id);
+  void GetTx(const std::string& chain_id,
+             const std::string& id,
+             GetTxCallback callback);
   void DeleteTx(const std::string& chain_id, const std::string& id);
   void WipeTxs();
 
@@ -44,10 +53,11 @@ class TxStateManager {
   static void MigrateSolanaTransactionsForV0TransactionsSupport(
       PrefService* prefs);
 
-  std::vector<std::unique_ptr<TxMeta>> GetTransactionsByStatus(
+  void GetTransactionsByStatus(
       const absl::optional<std::string>& chain_id,
       const absl::optional<mojom::TransactionStatus>& status,
-      const absl::optional<std::string>& from);
+      const absl::optional<std::string>& from,
+      GetTxsByStatusCallback callback);
 
   class Observer : public base::CheckedObserver {
    public:
@@ -67,9 +77,6 @@ class TxStateManager {
 
  private:
   FRIEND_TEST_ALL_PREFIXES(TxStateManagerUnitTest, TxOperations);
-  void RetireTxByStatus(const std::string& chain_id,
-                        mojom::TransactionStatus status,
-                        size_t max_num);
 
   virtual mojom::CoinType GetCoinType() const = 0;
 
@@ -88,8 +95,31 @@ class TxStateManager {
   virtual std::string GetTxPrefPathPrefix(
       const absl::optional<std::string>& chain_id) = 0;
 
-  base::ObserverList<Observer> observers_;
+  void ContinueAddOrUpdateTx(base::Value::Dict meta_dict,
+                             absl::optional<base::Value> txs);
+  void ContinueGetTx(const std::string& chain_id,
+                     const std::string& id,
+                     GetTxCallback callback,
+                     absl::optional<base::Value> txs);
+  void ContinueDeleteTx(const std::string& chain_id,
+                        const std::string& id,
+                        absl::optional<base::Value> txs);
+  void ContinueGetTransactionsByStatus(
+      const absl::optional<std::string>& chain_id,
+      const absl::optional<mojom::TransactionStatus>& status,
+      const absl::optional<std::string>& from,
+      GetTxsByStatusCallback callback,
+      absl::optional<base::Value> txs);
 
+  void GetTransactionsByStatusInternal(
+      const absl::optional<std::string>& chain_id,
+      const absl::optional<mojom::TransactionStatus>& status,
+      const absl::optional<std::string>& from,
+      const base::Value::Dict& dict,
+      std::vector<std::unique_ptr<TxMeta>>& result);
+
+  base::ObserverList<Observer> observers_;
+  raw_ptr<value_store::ValueStoreFrontend> store_;
   base::WeakPtrFactory<TxStateManager> weak_factory_;
 };
 

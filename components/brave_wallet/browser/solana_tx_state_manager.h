@@ -25,13 +25,17 @@ class SolanaTxMeta;
 
 class SolanaTxStateManager : public TxStateManager {
  public:
-  explicit SolanaTxStateManager(PrefService* prefs);
+  SolanaTxStateManager(PrefService* prefs,
+                       value_store::ValueStoreFrontend* store);
   ~SolanaTxStateManager() override;
   SolanaTxStateManager(const SolanaTxStateManager&) = delete;
   SolanaTxStateManager operator=(const SolanaTxStateManager&) = delete;
 
-  std::unique_ptr<SolanaTxMeta> GetSolanaTx(const std::string& chain_id,
-                                            const std::string& id);
+  using GetSolanaTxCallback =
+      base::OnceCallback<void(std::unique_ptr<SolanaTxMeta>)>;
+  void GetSolanaTx(const std::string& chain_id,
+                   const std::string& id,
+                   GetSolanaTxCallback callback);
   std::unique_ptr<SolanaTxMeta> ValueToSolanaTxMeta(
       const base::Value::Dict& value);
 

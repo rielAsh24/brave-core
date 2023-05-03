@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include "base/files/file_path.h"
 #include "brave/components/brave_wallet/browser/bitcoin/bitcoin_tx_manager.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_prefs.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_utils.h"
@@ -15,11 +16,24 @@
 #include "brave/components/brave_wallet/browser/json_rpc_service.h"
 #include "brave/components/brave_wallet/browser/solana_tx_manager.h"
 #include "brave/components/brave_wallet/browser/tx_manager.h"
+#include "components/value_store/value_store_factory_impl.h"
+#include "components/value_store/value_store_frontend.h"
+#include "components/value_store/value_store_task_runner.h"
 #include "url/origin.h"
+
+#if BUILDFLAG(IS_IOS)
+#include "ios/web/public/thread/web_task_traits.h"
+#include "ios/web/public/thread/web_thread.h"
+#else
+#include "content/public/browser/browser_task_traits.h"
+#include "content/public/browser/browser_thread.h"
+#endif  // BUILDFLAG(IS_IOS)
 
 namespace brave_wallet {
 
 namespace {
+
+const char kValueStoreDatabaseUMAClientName[] = "BraveWallet";
 
 mojom::CoinType GetCoinTypeFromTxDataUnion(
     const mojom::TxDataUnion& tx_data_union) {
@@ -50,18 +64,35 @@ size_t CalculatePendingTxCount(
 TxService::TxService(JsonRpcService* json_rpc_service,
                      BitcoinWalletService* bitcoin_wallet_service,
                      KeyringService* keyring_service,
-                     PrefService* prefs)
+                     PrefService* prefs,
+                     const base::FilePath& context_path)
     : prefs_(prefs), json_rpc_service_(json_rpc_service), weak_factory_(this) {
-  tx_manager_map_[mojom::CoinType::ETH] = std::make_unique<EthTxManager>(
-      this, json_rpc_service, keyring_service, prefs);
-  tx_manager_map_[mojom::CoinType::SOL] = std::make_unique<SolanaTxManager>(
-      this, json_rpc_service, keyring_service, prefs);
-  tx_manager_map_[mojom::CoinType::FIL] = std::make_unique<FilTxManager>(
-      this, json_rpc_service, keyring_service, prefs);
+  store_factory_ = base::MakeRefCounted<value_store::ValueStoreFactoryImpl>(
+      context_path.AppendASCII(kWalletBaseDirectory));
+  store_ = std::make_unique<value_store::ValueStoreFrontend>(
+      store_factory_, base::FilePath(FILE_PATH_LITERAL(kWalletStorage)),
+      kValueStoreDatabaseUMAClientName,
+#if BUILDFLAG(IS_IOS)
+      web::GetUIThreadTaskRunner({}),
+#else
+      content::GetUIThreadTaskRunner({}),
+#endif
+      value_store::GetValueStoreTaskRunner());
+
+  tx_manager_map_[mojom::CoinType::ETH] =
+      std::unique_ptr<TxManager>(new EthTxManager(
+          this, json_rpc_service, keyring_service, prefs, store_.get()));
+  tx_manager_map_[mojom::CoinType::SOL] =
+      std::unique_ptr<TxManager>(new SolanaTxManager(
+          this, json_rpc_service, keyring_service, prefs, store_.get()));
+  tx_manager_map_[mojom::CoinType::FIL] =
+      std::unique_ptr<TxManager>(new FilTxManager(
+          this, json_rpc_service, keyring_service, prefs, store_.get()));
   if (IsBitcoinEnabled()) {
     CHECK(bitcoin_wallet_service);
     tx_manager_map_[mojom::CoinType::BTC] = std::make_unique<BitcoinTxManager>(
-        this, json_rpc_service, bitcoin_wallet_service, keyring_service, prefs);
+        this, json_rpc_service, bitcoin_wallet_service, keyring_service, prefs,
+        store_.get());
   }
 }
 

@@ -11,10 +11,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/files/scoped_temp_dir.h"
 #include "base/functional/callback_helpers.h"
 #include "base/test/bind.h"
 #include "base/test/scoped_feature_list.h"
-#include "base/test/task_environment.h"
 #include "base/test/values_test_util.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_constants.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_prefs.h"
@@ -34,6 +34,7 @@
 #include "brave/components/brave_wallet/common/features.h"
 #include "brave/components/brave_wallet/common/hex_utils.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
+#include "content/public/test/browser_task_environment.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "services/data_decoder/public/cpp/test_support/in_process_data_decoder.h"
@@ -256,9 +257,10 @@ class EthTxManagerUnitTest : public testing::Test {
         shared_url_loader_factory_, &profile_prefs_);
     keyring_service_ = std::make_unique<KeyringService>(
         json_rpc_service_.get(), &profile_prefs_, &local_state_);
-    tx_service_ =
-        std::make_unique<TxService>(json_rpc_service_.get(), nullptr,
-                                    keyring_service_.get(), &profile_prefs_);
+    ASSERT_TRUE(temp_dir_.CreateUniqueTempDir());
+    tx_service_ = std::make_unique<TxService>(
+        json_rpc_service_.get(), nullptr, keyring_service_.get(),
+        &profile_prefs_, temp_dir_.GetPath());
 
     keyring_service_->CreateWallet("testing123", base::DoNothing());
     base::RunLoop().RunUntilIdle();
@@ -467,9 +469,24 @@ class EthTxManagerUnitTest : public testing::Test {
     run_loop.Run();
   }
 
+  std::unique_ptr<EthTxMeta> GetTxForTesting(const std::string& chain_id,
+                                             const std::string& tx_meta_id) {
+    std::unique_ptr<EthTxMeta> meta_out = nullptr;
+    base::RunLoop run_loop;
+    eth_tx_manager()->GetTxForTesting(
+        chain_id, tx_meta_id,
+        base::BindLambdaForTesting([&](std::unique_ptr<EthTxMeta> meta) {
+          meta_out = std::move(meta);
+          run_loop.Quit();
+        }));
+    run_loop.Run();
+    return meta_out;
+  }
+
  protected:
   base::test::ScopedFeatureList feature_list_;
-  base::test::TaskEnvironment task_environment_;
+  content::BrowserTaskEnvironment task_environment_;
+  base::ScopedTempDir temp_dir_;
   sync_preferences::TestingPrefServiceSyncable profile_prefs_;
   sync_preferences::TestingPrefServiceSyncable local_state_;
   network::TestURLLoaderFactory url_loader_factory_;
@@ -498,8 +515,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapprovedTransactionWithGasPriceAndGasLimit) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -527,8 +543,7 @@ TEST_F(EthTxManagerUnitTest, WalletOrigin) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   EXPECT_EQ(tx_meta->origin(), url::Origin::Create(GURL("chrome://wallet")));
@@ -551,8 +566,7 @@ TEST_F(EthTxManagerUnitTest, SomeSiteOrigin) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   EXPECT_EQ(tx_meta->origin(),
@@ -576,8 +590,7 @@ TEST_F(EthTxManagerUnitTest,
       "mockGroupId");
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId");
 
@@ -589,8 +602,7 @@ TEST_F(EthTxManagerUnitTest,
                      &tx_meta_id));
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), absl::nullopt);
 
@@ -609,8 +621,7 @@ TEST_F(EthTxManagerUnitTest,
       "mockGroupId1559");
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId1559");
 
@@ -622,8 +633,7 @@ TEST_F(EthTxManagerUnitTest,
                      &tx_meta_id));
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), absl::nullopt);
 }
@@ -644,8 +654,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapprovedTransactionWithoutGasLimit) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -694,8 +703,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapprovedTransactionWithoutGasLimit) {
                        &callback_called, &tx_meta_id));
     base::RunLoop().RunUntilIdle();
     EXPECT_TRUE(callback_called);
-    tx_meta =
-        eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+    tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
     EXPECT_TRUE(tx_meta);
     EXPECT_TRUE(HexValueToUint256(gas_price, &gas_price_value));
     EXPECT_TRUE(
@@ -720,8 +728,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapprovedTransactionWithoutGasPrice) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -758,8 +765,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -795,8 +801,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -822,8 +827,7 @@ TEST_F(EthTxManagerUnitTest, SetGasPriceAndLimitForUnapprovedTransaction) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_price_value;
@@ -895,8 +899,7 @@ TEST_F(EthTxManagerUnitTest, SetGasPriceAndLimitForUnapprovedTransaction) {
   EXPECT_TRUE(observer.TxUpdated());
 
   // Get the updated TX.
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->gas_price(), update_gas_price);
   EXPECT_EQ(tx_meta->tx()->gas_limit(), update_gas_limit);
@@ -917,8 +920,7 @@ TEST_F(EthTxManagerUnitTest, SetDataForUnapprovedTransaction) {
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
 
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   EXPECT_EQ(tx_meta->tx()->data(), initial_data);
@@ -952,8 +954,7 @@ TEST_F(EthTxManagerUnitTest, SetDataForUnapprovedTransaction) {
   EXPECT_TRUE(observer.TxUpdated());
 
   // Get the updated TX.
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->data(), new_data2);
 }
@@ -972,8 +973,7 @@ TEST_F(EthTxManagerUnitTest, SetNonceForUnapprovedTransaction) {
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
 
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   EXPECT_EQ(tx_meta->tx()->nonce(), 6ULL);
@@ -1017,8 +1017,7 @@ TEST_F(EthTxManagerUnitTest, SetNonceForUnapprovedTransaction) {
   EXPECT_TRUE(observer.TxUpdated());
 
   // Get the updated TX.
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->nonce(), 3ULL);
 
@@ -1037,8 +1036,7 @@ TEST_F(EthTxManagerUnitTest, SetNonceForUnapprovedTransaction) {
   EXPECT_TRUE(observer.TxUpdated());
 
   // Get the updated TX.
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->nonce(), absl::nullopt);
 }
@@ -1151,8 +1149,7 @@ TEST_F(EthTxManagerUnitTest, ProcessHardwareSignature) {
         EXPECT_TRUE(success);
         EXPECT_EQ(error_out, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(error_message_out.empty());
-        auto tx_meta = eth_tx_manager()->GetTxForTesting(
-            mojom::kLocalhostChainId, tx_meta_id);
+        auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
         EXPECT_TRUE(tx_meta);
         EXPECT_EQ(tx_meta->status(), mojom::TransactionStatus::Submitted);
         run_loop.Quit();
@@ -1190,8 +1187,7 @@ TEST_F(EthTxManagerUnitTest, ProcessHardwareSignatureFail) {
         EXPECT_EQ(error_message_out,
                   l10n_util::GetStringUTF8(
                       IDS_BRAVE_WALLET_HARDWARE_PROCESS_TRANSACTION_ERROR));
-        auto tx_meta = eth_tx_manager()->GetTxForTesting(
-            mojom::kLocalhostChainId, tx_meta_id);
+        auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
         EXPECT_TRUE(tx_meta);
         EXPECT_EQ(tx_meta->status(), mojom::TransactionStatus::Error);
         callback_called = true;
@@ -1243,8 +1239,7 @@ TEST_F(EthTxManagerUnitTest, GetNonceForHardwareTransaction) {
       base::BindLambdaForTesting([&](const absl::optional<std::string>& nonce) {
         EXPECT_TRUE(nonce);
         EXPECT_FALSE(nonce->empty());
-        auto tx_meta = eth_tx_manager()->GetTxForTesting(
-            mojom::kLocalhostChainId, tx_meta_id);
+        auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
         EXPECT_TRUE(tx_meta);
         EXPECT_EQ(tx_meta->status(), mojom::TransactionStatus::Unapproved);
         EXPECT_EQ(Uint256ValueToHex(tx_meta->tx()->nonce().value()), nonce);
@@ -1298,8 +1293,7 @@ TEST_F(EthTxManagerUnitTest, GetNonceForHardwareTransaction1559) {
       base::BindLambdaForTesting([&](const absl::optional<std::string>& nonce) {
         EXPECT_TRUE(nonce);
         EXPECT_FALSE(nonce->empty());
-        auto tx_meta = eth_tx_manager()->GetTxForTesting(
-            mojom::kLocalhostChainId, tx_meta_id);
+        auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
         EXPECT_TRUE(tx_meta);
         EXPECT_EQ(tx_meta->status(), mojom::TransactionStatus::Unapproved);
         EXPECT_EQ(Uint256ValueToHex(tx_meta->tx()->nonce().value()), nonce);
@@ -1368,8 +1362,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapproved1559TransactionWithGasFeeAndLimit) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1398,8 +1391,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapproved1559TransactionWithoutGasLimit) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1429,8 +1421,7 @@ TEST_F(EthTxManagerUnitTest, AddUnapproved1559TransactionWithoutGasFee) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1462,8 +1453,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1495,8 +1485,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   // Gas limit obtained by querying eth_estimateGas.
@@ -1531,8 +1520,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1561,8 +1549,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   // Gas limit obtained by querying eth_estimateGas.
@@ -1593,8 +1580,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   uint256_t gas_limit_value;
@@ -1626,8 +1612,7 @@ TEST_F(EthTxManagerUnitTest, SetGasFeeAndLimitForUnapprovedTransaction) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   // Gas limit should be filled by requesting eth_estimateGas.
@@ -1720,8 +1705,7 @@ TEST_F(EthTxManagerUnitTest, SetGasFeeAndLimitForUnapprovedTransaction) {
   EXPECT_TRUE(observer.TxUpdated());
 
   // Get the updated TX.
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->gas_limit(), update_gas_limit);
   tx1559 = static_cast<Eip1559Transaction*>(tx_meta->tx());
@@ -1746,8 +1730,7 @@ TEST_F(EthTxManagerUnitTest,
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   EXPECT_TRUE(tx_meta);
 
   callback_called = false;
@@ -1819,17 +1802,15 @@ TEST_F(EthTxManagerUnitTest, TestSubmittedToConfirmed) {
   // Nothing is triggered after 10s
   task_environment_.FastForwardBy(
       base::Seconds(kBlockTrackerDefaultTimeInSeconds - 1));
-  auto tx_meta1 =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, "001");
+  auto tx_meta1 = GetTxForTesting(mojom::kLocalhostChainId, "001");
   EXPECT_EQ(mojom::TransactionStatus::Submitted, tx_meta1->status());
-  auto tx_meta2 =
-      eth_tx_manager()->GetTxForTesting(mojom::kMainnetChainId, "002");
+  auto tx_meta2 = GetTxForTesting(mojom::kMainnetChainId, "002");
   EXPECT_EQ(mojom::TransactionStatus::Submitted, tx_meta2->status());
 
   task_environment_.FastForwardBy(base::Seconds(2));
-  tx_meta1 = eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, "001");
+  tx_meta1 = GetTxForTesting(mojom::kLocalhostChainId, "001");
   EXPECT_EQ(mojom::TransactionStatus::Confirmed, tx_meta1->status());
-  tx_meta2 = eth_tx_manager()->GetTxForTesting(mojom::kMainnetChainId, "002");
+  tx_meta2 = GetTxForTesting(mojom::kMainnetChainId, "002");
   EXPECT_EQ(mojom::TransactionStatus::Confirmed, tx_meta2->status());
 
   // If the keyring is locked, nothing should update
@@ -1847,9 +1828,9 @@ TEST_F(EthTxManagerUnitTest, TestSubmittedToConfirmed) {
   keyring_service_->Lock();
   task_environment_.FastForwardBy(
       base::Seconds(kBlockTrackerDefaultTimeInSeconds + 1));
-  tx_meta1 = eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, "001");
+  tx_meta1 = GetTxForTesting(mojom::kLocalhostChainId, "001");
   EXPECT_EQ(mojom::TransactionStatus::Submitted, tx_meta1->status());
-  tx_meta2 = eth_tx_manager()->GetTxForTesting(mojom::kMainnetChainId, "002");
+  tx_meta2 = GetTxForTesting(mojom::kMainnetChainId, "002");
   EXPECT_EQ(mojom::TransactionStatus::Submitted, tx_meta1->status());
 }
 
@@ -1867,11 +1848,10 @@ TEST_F(EthTxManagerUnitTest, SpeedupTransaction) {
       orig_meta_id, mojom::TransactionStatus::Submitted, false, &tx_meta_id);
 
   auto expected_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+      GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(expected_tx_meta);
   expected_tx_meta->tx()->set_gas_price(103027933985ULL);  // 0x17fcf18321
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(*expected_tx_meta->tx(), *tx_meta->tx());
 
@@ -1886,12 +1866,10 @@ TEST_F(EthTxManagerUnitTest, SpeedupTransaction) {
       mojom::kLocalhostChainId, "0x06", "0xa", data_, orig_meta_id,
       mojom::TransactionStatus::Submitted, false, &tx_meta_id);
 
-  expected_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  expected_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(expected_tx_meta);
   expected_tx_meta->tx()->set_gas_price(103027933985ULL);  // 0x17fcf18321
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(*expected_tx_meta->tx(), *tx_meta->tx());
 
@@ -1906,12 +1884,10 @@ TEST_F(EthTxManagerUnitTest, SpeedupTransaction) {
       mojom::kLocalhostChainId, "0x07", "0x174876e800", data_, orig_meta_id,
       mojom::TransactionStatus::Submitted, false, &tx_meta_id);
 
-  expected_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  expected_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(expected_tx_meta);
   expected_tx_meta->tx()->set_gas_price(110000000000ULL);  // 0x174876e800 * 1.1
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(*expected_tx_meta->tx(), *tx_meta->tx());
 
@@ -1921,8 +1897,7 @@ TEST_F(EthTxManagerUnitTest, SpeedupTransaction) {
                                       std::vector<uint8_t>(), orig_meta_id,
                                       mojom::TransactionStatus::Submitted,
                                       false, &tx_meta_id, "mockGroupId");
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId");
 
@@ -1949,15 +1924,14 @@ TEST_F(EthTxManagerUnitTest, Speedup1559Transaction) {
       mojom::TransactionStatus::Submitted, false, &tx_meta_id);
 
   auto expected_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+      GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(expected_tx_meta);
   auto* expected_tx1559_ptr =
       static_cast<Eip1559Transaction*>(expected_tx_meta->tx());
   expected_tx1559_ptr->set_max_priority_fee_per_gas(
       2200000000ULL);                                        // 2 * 1.1 gwei
   expected_tx1559_ptr->set_max_fee_per_gas(52800000000ULL);  // 48 * 1.1 gwei
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   auto* tx1559_ptr = static_cast<Eip1559Transaction*>(tx_meta->tx());
   EXPECT_EQ(*expected_tx1559_ptr, *tx1559_ptr);
@@ -1970,15 +1944,13 @@ TEST_F(EthTxManagerUnitTest, Speedup1559Transaction) {
       "0xb2d05e00" /* 3 Gwei */, orig_meta_id,
       mojom::TransactionStatus::Submitted, false, &tx_meta_id);
 
-  expected_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  expected_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(expected_tx_meta);
   expected_tx1559_ptr =
       static_cast<Eip1559Transaction*>(expected_tx_meta->tx());
   expected_tx1559_ptr->set_max_priority_fee_per_gas(2000000000ULL);  // 2 Gwei
   expected_tx1559_ptr->set_max_fee_per_gas(48000000000ULL);          // 48 Gwei
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   tx1559_ptr = static_cast<Eip1559Transaction*>(tx_meta->tx());
   EXPECT_EQ(*expected_tx1559_ptr, *tx1559_ptr);
@@ -1989,8 +1961,7 @@ TEST_F(EthTxManagerUnitTest, Speedup1559Transaction) {
       mojom::kLocalhostChainId, "0x05", data_, "0x77359400" /* 2 Gwei */,
       "0xb2d05e000" /* 48 Gwei */, orig_meta_id,
       mojom::TransactionStatus::Submitted, false, &tx_meta_id, "mockGroupId");
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId");
 
@@ -2019,11 +1990,9 @@ TEST_F(EthTxManagerUnitTest, CancelTransaction) {
       mojom::kLocalhostChainId, "0x06", "0x2540BE4000" /* 160 gwei */, data_,
       orig_meta_id, mojom::TransactionStatus::Submitted, true, &tx_meta_id);
 
-  auto orig_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  auto orig_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(orig_tx_meta);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->nonce(), orig_tx_meta->tx()->nonce());
   EXPECT_EQ(Uint256ValueToHex(tx_meta->tx()->nonce().value()), "0x6");
@@ -2043,11 +2012,9 @@ TEST_F(EthTxManagerUnitTest, CancelTransaction) {
       mojom::kLocalhostChainId, "0x07", "0x1", data_, orig_meta_id,
       mojom::TransactionStatus::Submitted, true, &tx_meta_id);
 
-  orig_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  orig_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(orig_tx_meta);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->tx()->nonce(), orig_tx_meta->tx()->nonce());
   EXPECT_EQ(Uint256ValueToHex(tx_meta->tx()->nonce().value()), "0x7");
@@ -2061,8 +2028,7 @@ TEST_F(EthTxManagerUnitTest, CancelTransaction) {
   DoSpeedupOrCancelTransactionSuccess(
       mojom::kLocalhostChainId, "0x07", "0x1", data_, orig_meta_id,
       mojom::TransactionStatus::Submitted, true, &tx_meta_id, "mockGroupId");
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId");
 
@@ -2075,11 +2041,9 @@ TEST_F(EthTxManagerUnitTest, CancelTransaction) {
       "0xb2d05e000" /* 48 Gwei */, orig_meta_id,
       mojom::TransactionStatus::Submitted, true, &tx_meta_id);
 
-  orig_tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
+  orig_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, orig_meta_id);
   ASSERT_TRUE(orig_tx_meta);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   auto* orig_tx1559_ptr = static_cast<Eip1559Transaction*>(orig_tx_meta->tx());
   auto* tx1559_ptr = static_cast<Eip1559Transaction*>(tx_meta->tx());
@@ -2097,8 +2061,7 @@ TEST_F(EthTxManagerUnitTest, CancelTransaction) {
       mojom::kLocalhostChainId, "0x08", data_, "0x77359400" /* 2 Gwei */,
       "0xb2d05e000" /* 48 Gwei */, orig_meta_id,
       mojom::TransactionStatus::Submitted, true, &tx_meta_id, "mockGroupId");
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(tx_meta->group_id(), "mockGroupId");
 
@@ -2142,8 +2105,7 @@ TEST_F(EthTxManagerUnitTest, RetryTransaction) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  auto tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  auto tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   EXPECT_EQ(*tx_meta->tx(), tx.value());
 
@@ -2171,8 +2133,7 @@ TEST_F(EthTxManagerUnitTest, RetryTransaction) {
 
   base::RunLoop().RunUntilIdle();
   EXPECT_TRUE(callback_called);
-  tx_meta =
-      eth_tx_manager()->GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
+  tx_meta = GetTxForTesting(mojom::kLocalhostChainId, tx_meta_id);
   ASSERT_TRUE(tx_meta);
   auto* tx1559_ptr = static_cast<Eip1559Transaction*>(tx_meta->tx());
   EXPECT_EQ(*tx1559_ptr, tx1559.value());

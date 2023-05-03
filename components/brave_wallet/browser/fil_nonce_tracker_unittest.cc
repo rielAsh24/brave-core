@@ -7,16 +7,18 @@
 
 #include <utility>
 
+#include "base/files/scoped_temp_dir.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/test/bind.h"
-#include "base/test/task_environment.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_prefs.h"
 #include "brave/components/brave_wallet/browser/brave_wallet_utils.h"
 #include "brave/components/brave_wallet/browser/fil_tx_meta.h"
 #include "brave/components/brave_wallet/browser/fil_tx_state_manager.h"
 #include "brave/components/brave_wallet/browser/json_rpc_service.h"
 #include "brave/components/brave_wallet/common/brave_wallet.mojom.h"
+#include "brave/components/brave_wallet/common/test_utils.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
+#include "content/public/test/browser_task_environment.h"
 #include "services/data_decoder/public/cpp/test_support/in_process_data_decoder.h"
 #include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
 #include "services/network/test/test_url_loader_factory.h"
@@ -84,7 +86,7 @@ class FilNonceTrackerUnitTest : public testing::Test {
   }
 
   uint64_t transaction_count_ = 0;
-  base::test::TaskEnvironment task_environment_;
+  content::BrowserTaskEnvironment task_environment_;
   network::TestURLLoaderFactory url_loader_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
   sync_preferences::TestingPrefServiceSyncable prefs_;
@@ -94,7 +96,12 @@ class FilNonceTrackerUnitTest : public testing::Test {
 TEST_F(FilNonceTrackerUnitTest, GetNonce) {
   JsonRpcService service(shared_url_loader_factory(), GetPrefs());
 
-  FilTxStateManager tx_state_manager(GetPrefs());
+  base::ScopedTempDir temp_dir;
+  scoped_refptr<value_store::TestValueStoreFactory> factory =
+      GetTestValueStoreFactory(temp_dir);
+  std::unique_ptr<value_store::ValueStoreFrontend> storage =
+      GetValueStoreFrontendForTest(factory);
+  FilTxStateManager tx_state_manager(GetPrefs(), storage.get());
   FilNonceTracker nonce_tracker(&tx_state_manager, &service);
 
   SetTransactionCount(2);
