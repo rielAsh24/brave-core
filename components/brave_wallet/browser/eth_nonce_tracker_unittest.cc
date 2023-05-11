@@ -88,6 +88,16 @@ class EthNonceTrackerUnitTest : public testing::Test {
         GetResultString());
   }
 
+  void AddOrUpdateTx(EthTxStateManager* tx_state_manager, const TxMeta& meta) {
+    base::RunLoop run_loop;
+    tx_state_manager->AddOrUpdateTx(
+        meta, base::BindLambdaForTesting([&]() { run_loop.Quit(); }));
+    run_loop.Run();
+  }
+
+ protected:
+  content::BrowserTaskEnvironment task_environment_;
+
  private:
   std::string GetResultString() const {
     return "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"" +
@@ -95,7 +105,6 @@ class EthNonceTrackerUnitTest : public testing::Test {
   }
 
   uint256_t transaction_count_ = 0;
-  content::BrowserTaskEnvironment task_environment_;
   network::TestURLLoaderFactory url_loader_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
   sync_preferences::TestingPrefServiceSyncable prefs_;
@@ -126,7 +135,7 @@ TEST_F(EthNonceTrackerUnitTest, GetNonce) {
   meta.set_from(EthAddress::FromHex(address).ToChecksumAddress());
   meta.set_status(mojom::TransactionStatus::Confirmed);
   meta.tx()->set_nonce(uint256_t(2));
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(&nonce_tracker, mojom::kLocalhostChainId, address, true, 3);
 
@@ -134,7 +143,7 @@ TEST_F(EthNonceTrackerUnitTest, GetNonce) {
   meta.set_id(TxMeta::GenerateMetaID());
   meta.set_status(mojom::TransactionStatus::Confirmed);
   meta.tx()->set_nonce(uint256_t(3));
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(&nonce_tracker, mojom::kLocalhostChainId, address, true, 4);
 
@@ -142,16 +151,16 @@ TEST_F(EthNonceTrackerUnitTest, GetNonce) {
   meta.set_status(mojom::TransactionStatus::Submitted);
   meta.tx()->set_nonce(uint256_t(4));
   meta.set_id(TxMeta::GenerateMetaID());
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
   meta.set_id(TxMeta::GenerateMetaID());
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(&nonce_tracker, mojom::kLocalhostChainId, address, true, 5);
 
   // tx count: 2, confirmed: [2, 3], pending: [4, 4], sign: [5]
   meta.set_status(mojom::TransactionStatus::Signed);
   meta.set_id(TxMeta::GenerateMetaID());
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(&nonce_tracker, mojom::kLocalhostChainId, address, true, 5);
 

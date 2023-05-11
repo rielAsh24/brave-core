@@ -9,7 +9,7 @@
 #include "base/files/file_util.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/path_service.h"
-#include "base/task/single_thread_task_runner.h"
+#include "base/task/sequenced_task_runner.h"
 #include "components/value_store/value_store_task_runner.h"
 
 namespace brave_wallet {
@@ -60,7 +60,7 @@ std::unique_ptr<value_store::ValueStoreFrontend> GetValueStoreFrontendForTest(
     const scoped_refptr<value_store::ValueStoreFactory>& store_factory) {
   return std::make_unique<value_store::ValueStoreFrontend>(
       store_factory, base::FilePath(FILE_PATH_LITERAL("Brave Wallet Storage")),
-      "Brave Wallet Storage", base::SingleThreadTaskRunner::GetCurrentDefault(),
+      "Brave Wallet Storage", base::SequencedTaskRunner::GetCurrentDefault(),
       value_store::GetValueStoreTaskRunner());
 }
 

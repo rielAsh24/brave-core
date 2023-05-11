@@ -81,8 +81,13 @@ void SolanaTxManager::AddUnapprovedTransaction(
   meta.set_created_time(base::Time::Now());
   meta.set_status(mojom::TransactionStatus::Unapproved);
   meta.set_chain_id(chain_id);
-  tx_state_manager_->AddOrUpdateTx(meta);
-  std::move(callback).Run(true, meta.id(), "");
+  tx_state_manager_->AddOrUpdateTx(
+      meta, base::BindOnce(
+                [](AddUnapprovedTransactionCallback callback,
+                   const std::string& chain_id) {
+                  std::move(callback).Run(true, chain_id, "");
+                },
+                std::move(callback), meta.id()));
 }
 
 void SolanaTxManager::ApproveTransaction(const std::string& chain_id,
@@ -137,8 +142,16 @@ void SolanaTxManager::OnGetLatestBlockhash(std::unique_ptr<SolanaTxMeta> meta,
   meta->set_status(mojom::TransactionStatus::Approved);
   meta->tx()->message()->set_recent_blockhash(latest_blockhash);
   meta->tx()->message()->set_last_valid_block_height(last_valid_block_height);
-  tx_state_manager_->AddOrUpdateTx(*meta);
+  const auto& meta_ref = *meta;
+  tx_state_manager_->AddOrUpdateTx(
+      meta_ref, base::BindOnce(&SolanaTxManager::ContinueOnGetLatestBlockhash,
+                               weak_ptr_factory_.GetWeakPtr(), std::move(meta),
+                               std::move(callback)));
+}
 
+void SolanaTxManager::ContinueOnGetLatestBlockhash(
+    std::unique_ptr<SolanaTxMeta> meta,
+    ApproveTransactionCallback callback) {
   json_rpc_service_->SendSolanaTransaction(
       meta->chain_id(), meta->tx()->GetSignedTransaction(keyring_service_),
       meta->tx()->send_options(),
@@ -161,17 +174,23 @@ void SolanaTxManager::OnGetLatestBlockhashHardware(
 
   meta->tx()->message()->set_recent_blockhash(latest_blockhash);
   meta->tx()->message()->set_last_valid_block_height(last_valid_block_height);
-  tx_state_manager_->AddOrUpdateTx(*meta);
+  const auto& meta_ref = *meta;
+  tx_state_manager_->AddOrUpdateTx(
+      meta_ref,
+      base::BindOnce(
+          [](std::unique_ptr<SolanaTxMeta> meta,
+             GetTransactionMessageToSignCallback callback) {
+            auto message_signers_pair = meta->tx()->GetSerializedMessage();
+            if (!message_signers_pair) {
+              std::move(callback).Run(nullptr);
+              return;
+            }
 
-  auto message_signers_pair = meta->tx()->GetSerializedMessage();
-  if (!message_signers_pair) {
-    std::move(callback).Run(nullptr);
-    return;
-  }
-
-  auto& message_bytes = message_signers_pair->first;
-  std::move(callback).Run(
-      mojom::MessageToSignUnion::NewMessageBytes(std::move(message_bytes)));
+            auto& message_bytes = message_signers_pair->first;
+            std::move(callback).Run(mojom::MessageToSignUnion::NewMessageBytes(
+                std::move(message_bytes)));
+          },
+          std::move(meta), std::move(callback)));
 }
 
 void SolanaTxManager::OnSendSolanaTransaction(
@@ -204,9 +223,7 @@ void SolanaTxManager::ContinueOnSendSolanaTransaction(
     return;
   }
 
-  bool success = error == mojom::SolanaProviderError::kSuccess;
-
-  if (success) {
+  if (error == mojom::SolanaProviderError::kSuccess) {
     meta->set_status(mojom::TransactionStatus::Submitted);
     meta->set_submitted_time(base::Time::Now());
     meta->set_tx_hash(tx_hash);
@@ -214,10 +231,19 @@ void SolanaTxManager::ContinueOnSendSolanaTransaction(
     meta->set_status(mojom::TransactionStatus::Error);
   }
 
-  tx_state_manager_->AddOrUpdateTx(*meta);
+  tx_state_manager_->AddOrUpdateTx(
+      *meta, base::BindOnce(&SolanaTxManager::FinalizeOnSendSolanaTransaction,
+                            weak_ptr_factory_.GetWeakPtr(), std::move(callback),
+                            meta->chain_id(), std::move(error), error_message));
+}
 
-  if (success) {
-    UpdatePendingTransactions(meta->chain_id());
+void SolanaTxManager::FinalizeOnSendSolanaTransaction(
+    ApproveTransactionCallback callback,
+    const std::string& chain_id,
+    mojom::SolanaProviderError error,
+    const std::string& error_message) {
+  if (error == mojom::SolanaProviderError::kSuccess) {
+    UpdatePendingTransactions(chain_id);
   }
 
   std::move(callback).Run(
@@ -321,7 +347,7 @@ void SolanaTxManager::OnGetSignatureStatuses(
                     meta->tx()->message()->last_valid_block_height() <
                         block_height) {
                   meta->set_status(mojom::TransactionStatus::Dropped);
-                  tx_state_manager->AddOrUpdateTx(*meta);
+                  tx_state_manager->AddOrUpdateTx(*meta, base::DoNothing());
                 }
                 return;
               }
@@ -329,7 +355,7 @@ void SolanaTxManager::OnGetSignatureStatuses(
               if (!signature_statuses[i]->err.empty()) {
                 meta->set_signature_status(*signature_statuses[i]);
                 meta->set_status(mojom::TransactionStatus::Error);
-                tx_state_manager->AddOrUpdateTx(*meta);
+                tx_state_manager->AddOrUpdateTx(*meta, base::DoNothing());
                 return;
               }
 
@@ -342,7 +368,7 @@ void SolanaTxManager::OnGetSignatureStatuses(
                   meta->set_confirmed_time(base::Time::Now());
                 }
 
-                tx_state_manager->AddOrUpdateTx(*meta);
+                tx_state_manager->AddOrUpdateTx(*meta, base::DoNothing());
               }
             },
             tx_state_manager_.get(), i, block_height, signature_statuses));
@@ -701,14 +727,26 @@ void SolanaTxManager::ContinueProcessSolanaHardwareSignature(
   }
 
   meta->set_status(mojom::TransactionStatus::Approved);
-  tx_state_manager_->AddOrUpdateTx(*meta);
+  tx_state_manager_->AddOrUpdateTx(
+      *meta,
+      base::BindOnce(&SolanaTxManager::FinalizeProcessSolanaHardwareSignature,
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback),
+                     meta->chain_id(), meta->id(),
+                     base::Base64Encode(*transaction_bytes),
+                     meta->tx()->send_options()));
+}
 
+void SolanaTxManager::FinalizeProcessSolanaHardwareSignature(
+    ProcessSolanaHardwareSignatureCallback callback,
+    const std::string& chain_id,
+    const std::string& tx_meta_id,
+    const std::string& signed_tx,
+    absl::optional<SolanaTransaction::SendOptions> send_options) {
   json_rpc_service_->SendSolanaTransaction(
-      meta->chain_id(), base::Base64Encode(*transaction_bytes),
-      meta->tx()->send_options(),
+      chain_id, signed_tx, send_options,
       base::BindOnce(&SolanaTxManager::OnSendSolanaTransaction,
-                     weak_ptr_factory_.GetWeakPtr(), meta->chain_id(),
-                     meta->id(), std::move(callback)));
+                     weak_ptr_factory_.GetWeakPtr(), chain_id, tx_meta_id,
+                     std::move(callback)));
 }
 
 }  // namespace brave_wallet

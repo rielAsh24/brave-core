@@ -13,6 +13,7 @@
 #include "base/gtest_prod_util.h"
 #include "base/memory/weak_ptr.h"
 #include "brave/components/brave_wallet/browser/solana_block_tracker.h"
+#include "brave/components/brave_wallet/browser/solana_transaction.h"
 #include "brave/components/brave_wallet/browser/solana_tx_state_manager.h"
 #include "brave/components/brave_wallet/browser/tx_manager.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
@@ -134,6 +135,8 @@ class SolanaTxManager : public TxManager, public SolanaBlockTracker::Observer {
                             uint64_t last_valid_block_height,
                             mojom::SolanaProviderError error,
                             const std::string& error_message);
+  void ContinueOnGetLatestBlockhash(std::unique_ptr<SolanaTxMeta> meta,
+                                    ApproveTransactionCallback callback);
   void OnGetLatestBlockhashHardware(
       std::unique_ptr<SolanaTxMeta> meta,
       GetTransactionMessageToSignCallback callback,
@@ -183,6 +186,10 @@ class SolanaTxManager : public TxManager, public SolanaBlockTracker::Observer {
                                        mojom::SolanaProviderError error,
                                        const std::string& error_message,
                                        std::unique_ptr<TxMeta> meta);
+  void FinalizeOnSendSolanaTransaction(ApproveTransactionCallback callback,
+                                       const std::string& chain_id,
+                                       mojom::SolanaProviderError error,
+                                       const std::string& error_message);
   void ContinueGetTransactionMessageToSign(
       const std::string& tx_meta_id,
       GetTransactionMessageToSignCallback callback,
@@ -193,6 +200,12 @@ class SolanaTxManager : public TxManager, public SolanaBlockTracker::Observer {
       const std::vector<uint8_t>& signature_bytes,
       ProcessSolanaHardwareSignatureCallback callback,
       std::unique_ptr<SolanaTxMeta> meta);
+  void FinalizeProcessSolanaHardwareSignature(
+      ProcessSolanaHardwareSignatureCallback callback,
+      const std::string& chain_id,
+      const std::string& tx_meta_id,
+      const std::string& signed_tx,
+      absl::optional<SolanaTransaction::SendOptions> send_options);
 
   // SolanaBlockTracker::Observer
   void OnLatestBlockhashUpdated(const std::string& chain_id,

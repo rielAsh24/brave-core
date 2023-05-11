@@ -36,6 +36,9 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "url/origin.h"
 
+using base::RunLoop::Type::kDefault;
+using base::RunLoop::Type::kNestableTasksAllowed;
+
 namespace brave_wallet {
 
 namespace {
@@ -125,9 +128,10 @@ class FilTxManagerUnitTest : public testing::Test {
   }
 
   std::unique_ptr<FilTxMeta> GetTxForTesting(const std::string& chain_id,
-                                             const std::string& tx_meta_id) {
+                                             const std::string& tx_meta_id,
+                                             bool run_loop_nested = false) {
     std::unique_ptr<FilTxMeta> meta_out = nullptr;
-    base::RunLoop run_loop;
+    base::RunLoop run_loop(run_loop_nested ? kNestableTasksAllowed : kDefault);
     fil_tx_manager()->GetTxForTesting(
         chain_id, tx_meta_id,
         base::BindLambdaForTesting([&](std::unique_ptr<FilTxMeta> meta) {
@@ -627,7 +631,8 @@ TEST_F(FilTxManagerUnitTest, ProcessHardwareSignature) {
         ASSERT_EQ(error_union->get_filecoin_provider_error(),
                   mojom::FilecoinProviderError::kSuccess);
         ASSERT_TRUE(err_message.empty());
-        auto fil_tx_meta = GetTxForTesting(mojom::kLocalhostChainId, meta_id);
+        auto fil_tx_meta =
+            GetTxForTesting(mojom::kLocalhostChainId, meta_id, true);
         EXPECT_EQ(fil_tx_meta->status(), mojom::TransactionStatus::Submitted);
         run_loop.Quit();
       }));

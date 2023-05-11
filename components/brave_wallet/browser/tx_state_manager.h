@@ -42,11 +42,13 @@ class TxStateManager {
   using GetTxsByStatusCallback =
       base::OnceCallback<void(std::vector<std::unique_ptr<TxMeta>>)>;
 
-  void AddOrUpdateTx(const TxMeta& meta);
+  void AddOrUpdateTx(const TxMeta& meta, base::OnceClosure completion);
   void GetTx(const std::string& chain_id,
              const std::string& id,
              GetTxCallback callback);
-  void DeleteTx(const std::string& chain_id, const std::string& id);
+  void DeleteTx(const std::string& chain_id,
+                const std::string& id,
+                base::OnceClosure completion);
   void WipeTxs();
 
   static void MigrateAddChainIdToTransactionInfo(PrefService* prefs);
@@ -96,6 +98,7 @@ class TxStateManager {
       const absl::optional<std::string>& chain_id) = 0;
 
   void ContinueAddOrUpdateTx(base::Value::Dict meta_dict,
+                             base::OnceClosure completion,
                              absl::optional<base::Value> txs);
   void ContinueGetTx(const std::string& chain_id,
                      const std::string& id,
@@ -103,6 +106,7 @@ class TxStateManager {
                      absl::optional<base::Value> txs);
   void ContinueDeleteTx(const std::string& chain_id,
                         const std::string& id,
+                        base::OnceClosure completion,
                         absl::optional<base::Value> txs);
   void ContinueGetTransactionsByStatus(
       const absl::optional<std::string>& chain_id,

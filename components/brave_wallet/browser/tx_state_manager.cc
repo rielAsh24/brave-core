@@ -107,13 +107,16 @@ TxStateManager::TxStateManager(PrefService* prefs,
 
 TxStateManager::~TxStateManager() = default;
 
-void TxStateManager::AddOrUpdateTx(const TxMeta& meta) {
+void TxStateManager::AddOrUpdateTx(const TxMeta& meta,
+                                   base::OnceClosure completion) {
   store_->Get(kBraveWalletTransactions,
               base::BindOnce(&TxStateManager::ContinueAddOrUpdateTx,
-                             weak_factory_.GetWeakPtr(), meta.ToValue()));
+                             weak_factory_.GetWeakPtr(), meta.ToValue(),
+                             std::move(completion)));
 }
 
 void TxStateManager::ContinueAddOrUpdateTx(base::Value::Dict meta_dict,
+                                           base::OnceClosure completion,
                                            absl::optional<base::Value> txs) {
   base::Value::Dict dict;
   if (txs) {
@@ -131,12 +134,12 @@ void TxStateManager::ContinueAddOrUpdateTx(base::Value::Dict meta_dict,
     for (auto& observer : observers_) {
       observer.OnTransactionStatusChanged(meta->ToTransactionInfo());
     }
-    return;
+  } else {
+    for (auto& observer : observers_) {
+      observer.OnNewUnapprovedTx(meta->ToTransactionInfo());
+    }
   }
-
-  for (auto& observer : observers_) {
-    observer.OnNewUnapprovedTx(meta->ToTransactionInfo());
-  }
+  std::move(completion).Run();
 }
 
 void TxStateManager::GetTx(const std::string& chain_id,
@@ -168,14 +171,17 @@ void TxStateManager::ContinueGetTx(const std::string& chain_id,
 }
 
 void TxStateManager::DeleteTx(const std::string& chain_id,
-                              const std::string& id) {
+                              const std::string& id,
+                              base::OnceClosure completion) {
   store_->Get(kBraveWalletTransactions,
               base::BindOnce(&TxStateManager::ContinueDeleteTx,
-                             weak_factory_.GetWeakPtr(), chain_id, id));
+                             weak_factory_.GetWeakPtr(), chain_id, id,
+                             std::move(completion)));
 }
 
 void TxStateManager::ContinueDeleteTx(const std::string& chain_id,
                                       const std::string& id,
+                                      base::OnceClosure completion,
                                       absl::optional<base::Value> txs) {
   if (!txs) {
     return;
@@ -184,6 +190,7 @@ void TxStateManager::ContinueDeleteTx(const std::string& chain_id,
   dict.RemoveByDottedPath(
       base::JoinString({GetTxPrefPathPrefix(chain_id), id}, "."));
   store_->Set(kBraveWalletTransactions, base::Value(std::move(dict)));
+  std::move(completion).Run();
 }
 
 void TxStateManager::WipeTxs() {

@@ -79,6 +79,16 @@ class FilNonceTrackerUnitTest : public testing::Test {
     run_loop.Run();
   }
 
+  void AddOrUpdateTx(FilTxStateManager* tx_state_manager, const TxMeta& meta) {
+    base::RunLoop run_loop;
+    tx_state_manager->AddOrUpdateTx(
+        meta, base::BindLambdaForTesting([&]() { run_loop.Quit(); }));
+    run_loop.Run();
+  }
+
+ protected:
+  content::BrowserTaskEnvironment task_environment_;
+
  private:
   std::string GetResultString() const {
     return "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":" +
@@ -86,7 +96,6 @@ class FilNonceTrackerUnitTest : public testing::Test {
   }
 
   uint64_t transaction_count_ = 0;
-  content::BrowserTaskEnvironment task_environment_;
   network::TestURLLoaderFactory url_loader_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
   sync_preferences::TestingPrefServiceSyncable prefs_;
@@ -117,7 +126,7 @@ TEST_F(FilNonceTrackerUnitTest, GetNonce) {
   meta.set_from(FilAddress::FromAddress(address).EncodeAsString());
   meta.set_status(mojom::TransactionStatus::Confirmed);
   meta.tx()->set_nonce(uint64_t(2));
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(FROM_HERE, &nonce_tracker, mojom::kLocalhostChainId, address,
                true, uint64_t(3));
@@ -126,7 +135,7 @@ TEST_F(FilNonceTrackerUnitTest, GetNonce) {
   meta.set_id(TxMeta::GenerateMetaID());
   meta.set_status(mojom::TransactionStatus::Confirmed);
   meta.tx()->set_nonce(uint64_t(3));
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(FROM_HERE, &nonce_tracker, mojom::kLocalhostChainId, address,
                true, uint64_t(4));
@@ -135,9 +144,9 @@ TEST_F(FilNonceTrackerUnitTest, GetNonce) {
   meta.set_status(mojom::TransactionStatus::Submitted);
   meta.tx()->set_nonce(uint64_t(4));
   meta.set_id(TxMeta::GenerateMetaID());
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
   meta.set_id(TxMeta::GenerateMetaID());
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(&tx_state_manager, meta);
 
   GetNextNonce(FROM_HERE, &nonce_tracker, mojom::kLocalhostChainId, address,
                true, uint64_t(5));

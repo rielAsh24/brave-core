@@ -183,12 +183,15 @@ class EthTxManager : public TxManager, public EthBlockTracker::Observer {
                                     const absl::optional<std::string>& groupId,
                                     AddUnapprovedTransactionCallback);
 
-  void NotifyUnapprovedTxUpdated(TxMeta* meta);
   void OnConnectionError();
   void OnGetNextNonce(std::unique_ptr<EthTxMeta> meta,
                       ApproveTransactionCallback callback,
                       bool success,
                       uint256_t nonce);
+  void ContinueOnGetNextNonce(const std::string& chain_id,
+                              const absl::optional<std::string>& tx_meta_id,
+                              const absl::optional<std::string>& signed_tx,
+                              ApproveTransactionCallback callback);
   void OnGetNextNonceForHardware(
       std::unique_ptr<EthTxMeta> meta,
       GetNonceForHardwareTransactionCallback callback,
@@ -209,6 +212,10 @@ class EthTxManager : public TxManager, public EthBlockTracker::Observer {
                              mojom::ProviderError error,
                              const std::string& error_message,
                              std::unique_ptr<TxMeta> meta);
+  void ContinueOnGetTxAfterPublished(const std::string& chain_id,
+                                     mojom::ProviderError error,
+                                     const std::string& error_message,
+                                     ApproveTransactionCallback callback);
   void OnGetGasPrice(const std::string& chain_id,
                      const std::string& from,
                      const url::Origin& origin,
@@ -302,6 +309,12 @@ class EthTxManager : public TxManager, public EthBlockTracker::Observer {
       const std::string& s,
       ProcessHardwareSignatureCallback callback,
       std::unique_ptr<EthTxMeta> meta);
+
+  void FinalizeProcessHardwareSignature(
+      const std::string& chain_id,
+      const std::string& tx_meta_id,
+      const std::string& data,
+      ProcessHardwareSignatureCallback callback);
 
   void ContinueApproveTransaction(ApproveTransactionCallback callback,
                                   std::unique_ptr<EthTxMeta> meta);

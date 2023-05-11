@@ -94,6 +94,8 @@ class FilTxManager : public TxManager, public FilBlockTracker::Observer {
                       ApproveTransactionCallback callback,
                       bool success,
                       uint256_t nonce);
+  void ContinueOnGetNextNonce(std::unique_ptr<FilTxMeta> meta,
+                              ApproveTransactionCallback callback);
   void OnGetNextNonceForHardware(std::unique_ptr<FilTxMeta> meta,
                                  GetTransactionMessageToSignCallback callback,
                                  bool success,
@@ -109,6 +111,10 @@ class FilTxManager : public TxManager, public FilBlockTracker::Observer {
                                          mojom::FilecoinProviderError error,
                                          const std::string& error_message,
                                          std::unique_ptr<TxMeta> meta);
+  void FinalizeOnSendFilecoinTransaction(ApproveTransactionCallback callback,
+                                         const std::string& chain_id,
+                                         mojom::FilecoinProviderError error,
+                                         const std::string& error_message);
 
   void ContinueAddUnapprovedTransaction(
       const std::string& chain_id,
@@ -139,6 +145,11 @@ class FilTxManager : public TxManager, public FilBlockTracker::Observer {
       const std::string& signed_tx,
       ProcessFilHardwareSignatureCallback callback,
       std::unique_ptr<FilTxMeta> meta);
+  void FinalizeProcessFilHardwareSignature(
+      const std::string& signed_tx,
+      ProcessFilHardwareSignatureCallback callback,
+      const std::string& chain_id,
+      const std::string& tx_meta_id);
 
   FilTxStateManager* GetFilTxStateManager();
   FilBlockTracker* GetFilBlockTracker();

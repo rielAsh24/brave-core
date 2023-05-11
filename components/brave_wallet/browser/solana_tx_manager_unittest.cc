@@ -1157,7 +1157,10 @@ TEST_F(SolanaTxManagerUnitTest, ProcessSolanaHardwareSignature) {
   auto meta = GetTxForTesting(mojom::kSolanaMainnet, system_transfer_meta_id);
   meta->tx()->message()->set_recent_blockhash(latest_blockhash1_);
   meta->tx()->message()->set_last_valid_block_height(last_valid_block_height1_);
-  solana_tx_manager()->GetSolanaTxStateManager()->AddOrUpdateTx(*meta);
+  base::RunLoop run_loop;
+  solana_tx_manager()->GetSolanaTxStateManager()->AddOrUpdateTx(
+      *meta, base::BindLambdaForTesting([&run_loop]() { run_loop.Quit(); }));
+  run_loop.Run();
 
   // Valid blockhash and valid number of signers is valid
   TestProcessSolanaHardwareSignature(

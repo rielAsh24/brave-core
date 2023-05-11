@@ -51,6 +51,12 @@ class EthPendingTxTrackerUnitTest : public testing::Test {
     RegisterUserProfilePrefs(prefs->registry());
     builder.SetPrefService(std::move(prefs));
     profile_ = builder.Build();
+
+    factory_ = GetTestValueStoreFactory(temp_dir_);
+    storage_ = GetValueStoreFrontendForTest(factory_);
+    tx_state_manager_ =
+        std::make_unique<EthTxStateManager>(GetPrefs(), storage_.get());
+    ;
   }
 
   PrefService* GetPrefs() { return profile_->GetPrefs(); }
@@ -65,11 +71,10 @@ class EthPendingTxTrackerUnitTest : public testing::Test {
 
   void WaitForResponse() { task_environment_.RunUntilIdle(); }
 
-  std::vector<std::unique_ptr<TxMeta>> GetConfirmedTxs(
-      EthTxStateManager* tx_state_manager) {
+  std::vector<std::unique_ptr<TxMeta>> GetConfirmedTxs() {
     std::vector<std::unique_ptr<TxMeta>> txs_out;
     base::RunLoop run_loop;
-    tx_state_manager->GetTransactionsByStatus(
+    tx_state_manager_->GetTransactionsByStatus(
         absl::nullopt, mojom::TransactionStatus::Confirmed, absl::nullopt,
         base::BindLambdaForTesting(
             [&](std::vector<std::unique_ptr<TxMeta>> txs) {
@@ -80,12 +85,11 @@ class EthPendingTxTrackerUnitTest : public testing::Test {
     return txs_out;
   }
 
-  std::unique_ptr<EthTxMeta> GetEthTx(EthTxStateManager* tx_state_manager,
-                                      const std::string& chain_id,
+  std::unique_ptr<EthTxMeta> GetEthTx(const std::string& chain_id,
                                       const std::string& tx_meta_id) {
     std::unique_ptr<EthTxMeta> tx_out = nullptr;
     base::RunLoop run_loop;
-    tx_state_manager->GetEthTx(
+    tx_state_manager_->GetEthTx(
         chain_id, tx_meta_id,
         base::BindLambdaForTesting([&](std::unique_ptr<EthTxMeta> tx) {
           tx_out = std::move(tx);
@@ -95,24 +99,31 @@ class EthPendingTxTrackerUnitTest : public testing::Test {
     return tx_out;
   }
 
+  void AddOrUpdateTx(const TxMeta& meta) {
+    base::RunLoop run_loop;
+    tx_state_manager_->AddOrUpdateTx(
+        meta, base::BindLambdaForTesting([&]() { run_loop.Quit(); }));
+    run_loop.Run();
+  }
+
+ protected:
+  content::BrowserTaskEnvironment task_environment_;
+  std::unique_ptr<EthTxStateManager> tx_state_manager_;
+
  private:
   network::TestURLLoaderFactory url_loader_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
-  content::BrowserTaskEnvironment task_environment_;
+  base::ScopedTempDir temp_dir_;
+  scoped_refptr<value_store::TestValueStoreFactory> factory_;
+  std::unique_ptr<value_store::ValueStoreFrontend> storage_;
   std::unique_ptr<TestingProfile> profile_;
   data_decoder::test::InProcessDataDecoder in_process_data_decoder_;
 };
 
 TEST_F(EthPendingTxTrackerUnitTest, IsNonceTaken) {
   JsonRpcService service(shared_url_loader_factory(), GetPrefs());
-  base::ScopedTempDir temp_dir;
-  scoped_refptr<value_store::TestValueStoreFactory> factory =
-      GetTestValueStoreFactory(temp_dir);
-  std::unique_ptr<value_store::ValueStoreFrontend> storage =
-      GetValueStoreFrontendForTest(factory);
-  EthTxStateManager tx_state_manager(GetPrefs(), storage.get());
-  EthNonceTracker nonce_tracker(&tx_state_manager, &service);
-  EthPendingTxTracker pending_tx_tracker(&tx_state_manager, &service,
+  EthNonceTracker nonce_tracker(tx_state_manager_.get(), &service);
+  EthPendingTxTracker pending_tx_tracker(tx_state_manager_.get(), &service,
                                          &nonce_tracker);
 
   EthTxMeta meta;
@@ -123,8 +134,7 @@ TEST_F(EthPendingTxTrackerUnitTest, IsNonceTaken) {
   meta.set_chain_id(mojom::kMainnetChainId);
   meta.tx()->set_nonce(uint256_t(123));
 
-  EXPECT_FALSE(pending_tx_tracker.IsNonceTaken(
-      meta, GetConfirmedTxs(&tx_state_manager)));
+  EXPECT_FALSE(pending_tx_tracker.IsNonceTaken(meta, GetConfirmedTxs()));
 
   EthTxMeta meta_in_state;
   meta_in_state.set_id(TxMeta::GenerateMetaID());
@@ -132,14 +142,12 @@ TEST_F(EthPendingTxTrackerUnitTest, IsNonceTaken) {
   meta_in_state.set_status(mojom::TransactionStatus::Confirmed);
   meta_in_state.set_from(meta.from());
   meta_in_state.tx()->set_nonce(meta.tx()->nonce());
-  tx_state_manager.AddOrUpdateTx(meta_in_state);
+  AddOrUpdateTx(meta_in_state);
 
-  EXPECT_TRUE(pending_tx_tracker.IsNonceTaken(
-      meta, GetConfirmedTxs(&tx_state_manager)));
+  EXPECT_TRUE(pending_tx_tracker.IsNonceTaken(meta, GetConfirmedTxs()));
 
   meta.set_chain_id(mojom::kGoerliChainId);
-  EXPECT_FALSE(pending_tx_tracker.IsNonceTaken(
-      meta, GetConfirmedTxs(&tx_state_manager)));
+  EXPECT_FALSE(pending_tx_tracker.IsNonceTaken(meta, GetConfirmedTxs()));
 }
 
 TEST_F(EthPendingTxTrackerUnitTest, ShouldTxDropped) {
@@ -147,9 +155,8 @@ TEST_F(EthPendingTxTrackerUnitTest, ShouldTxDropped) {
       EthAddress::FromHex("0x2f015c60e0be116b1f0cd534704db9c92118fb6a")
           .ToChecksumAddress();
   JsonRpcService service(shared_url_loader_factory(), GetPrefs());
-  EthTxStateManager tx_state_manager(GetPrefs(), GetPath());
-  EthNonceTracker nonce_tracker(&tx_state_manager, &service);
-  EthPendingTxTracker pending_tx_tracker(&tx_state_manager, &service,
+  EthNonceTracker nonce_tracker(tx_state_manager_.get(), &service);
+  EthPendingTxTracker pending_tx_tracker(tx_state_manager_.get(), &service,
                                          &nonce_tracker);
   pending_tx_tracker.network_nonce_map_[addr][mojom::kMainnetChainId] =
       uint256_t(3);
@@ -177,19 +184,17 @@ TEST_F(EthPendingTxTrackerUnitTest, ShouldTxDropped) {
 
 TEST_F(EthPendingTxTrackerUnitTest, DropTransaction) {
   JsonRpcService service(shared_url_loader_factory(), GetPrefs());
-  EthTxStateManager tx_state_manager(GetPrefs(), GetPath());
-  EthNonceTracker nonce_tracker(&tx_state_manager, &service);
-  EthPendingTxTracker pending_tx_tracker(&tx_state_manager, &service,
+  EthNonceTracker nonce_tracker(tx_state_manager_.get(), &service);
+  EthPendingTxTracker pending_tx_tracker(tx_state_manager_.get(), &service,
                                          &nonce_tracker);
   EthTxMeta meta;
   meta.set_id("001");
   meta.set_chain_id(mojom::kMainnetChainId);
   meta.set_status(mojom::TransactionStatus::Submitted);
-  tx_state_manager.AddOrUpdateTx(meta);
+  AddOrUpdateTx(meta);
 
   pending_tx_tracker.DropTransaction(&meta);
-  EXPECT_EQ(GetEthTx(&tx_state_manager, mojom::kMainnetChainId, "001"),
-            nullptr);
+  EXPECT_EQ(GetEthTx(mojom::kMainnetChainId, "001"), nullptr);
 }
 
 TEST_F(EthPendingTxTrackerUnitTest, UpdatePendingTransactions) {
@@ -200,9 +205,8 @@ TEST_F(EthPendingTxTrackerUnitTest, UpdatePendingTransactions) {
       EthAddress::FromHex("0x2f015c60e0be116b1f0cd534704db9c92118fb6b")
           .ToChecksumAddress();
   JsonRpcService service(shared_url_loader_factory(), GetPrefs());
-  EthTxStateManager tx_state_manager(GetPrefs(), GetPath());
-  EthNonceTracker nonce_tracker(&tx_state_manager, &service);
-  EthPendingTxTracker pending_tx_tracker(&tx_state_manager, &service,
+  EthNonceTracker nonce_tracker(tx_state_manager_.get(), &service);
+  EthPendingTxTracker pending_tx_tracker(tx_state_manager_.get(), &service,
                                          &nonce_tracker);
   base::RunLoop().RunUntilIdle();
 
@@ -214,27 +218,27 @@ TEST_F(EthPendingTxTrackerUnitTest, UpdatePendingTransactions) {
     meta.set_chain_id(chain_id);
     meta.set_from(addr1);
     meta.set_status(mojom::TransactionStatus::Submitted);
-    tx_state_manager.AddOrUpdateTx(meta);
+    AddOrUpdateTx(meta);
     meta.set_id(base::StrCat({chain_id, "002"}));
     meta.set_from(addr2);
     meta.tx()->set_nonce(uint256_t(4));
     meta.set_status(mojom::TransactionStatus::Confirmed);
-    tx_state_manager.AddOrUpdateTx(meta);
+    AddOrUpdateTx(meta);
     meta.set_id(base::StrCat({chain_id, "003"}));
     meta.set_from(addr2);
     meta.tx()->set_nonce(uint256_t(4));
     meta.set_status(mojom::TransactionStatus::Submitted);
-    tx_state_manager.AddOrUpdateTx(meta);
+    AddOrUpdateTx(meta);
     meta.set_id(base::StrCat({chain_id, "004"}));
     meta.set_from(addr2);
     meta.tx()->set_nonce(uint256_t(4));
     meta.set_status(mojom::TransactionStatus::Signed);
-    tx_state_manager.AddOrUpdateTx(meta);
+    AddOrUpdateTx(meta);
     meta.set_id(base::StrCat({chain_id, "005"}));
     meta.set_from(addr2);
     meta.tx()->set_nonce(uint256_t(5));
     meta.set_status(mojom::TransactionStatus::Signed);
-    tx_state_manager.AddOrUpdateTx(meta);
+    AddOrUpdateTx(meta);
   }
 
   test_url_loader_factory()->SetInterceptor(
@@ -271,22 +275,18 @@ TEST_F(EthPendingTxTrackerUnitTest, UpdatePendingTransactions) {
                       }));
     run_loop.Run();
     WaitForResponse();
-    auto meta_from_state =
-        GetEthTx(&tx_state_manager, chain_id, base::StrCat({chain_id, "001"}));
+    auto meta_from_state = GetEthTx(chain_id, base::StrCat({chain_id, "001"}));
     ASSERT_NE(meta_from_state, nullptr);
     EXPECT_EQ(meta_from_state->status(), mojom::TransactionStatus::Confirmed);
     EXPECT_EQ(meta_from_state->from(), addr1);
     EXPECT_EQ(meta_from_state->tx_receipt().contract_address,
               "0xb60e8dd61c5d32be8058bb8eb970870f07233155");
 
-    meta_from_state =
-        GetEthTx(&tx_state_manager, chain_id, base::StrCat({chain_id, "003"}));
+    meta_from_state = GetEthTx(chain_id, base::StrCat({chain_id, "003"}));
     ASSERT_EQ(meta_from_state, nullptr);
-    meta_from_state =
-        GetEthTx(&tx_state_manager, chain_id, base::StrCat({chain_id, "004"}));
+    meta_from_state = GetEthTx(chain_id, base::StrCat({chain_id, "004"}));
     ASSERT_EQ(meta_from_state, nullptr);
-    meta_from_state =
-        GetEthTx(&tx_state_manager, chain_id, base::StrCat({chain_id, "005"}));
+    meta_from_state = GetEthTx(chain_id, base::StrCat({chain_id, "005"}));
     ASSERT_NE(meta_from_state, nullptr);
     EXPECT_EQ(meta_from_state->status(), mojom::TransactionStatus::Confirmed);
     EXPECT_EQ(meta_from_state->tx_receipt().contract_address,

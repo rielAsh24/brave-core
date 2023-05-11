@@ -106,8 +106,12 @@ void TxManager::RejectTransaction(const std::string& chain_id,
               return;
             }
             meta->set_status(mojom::TransactionStatus::Rejected);
-            tx_state_manager->AddOrUpdateTx(*meta);
-            std::move(callback).Run(true);
+            tx_state_manager->AddOrUpdateTx(
+                *meta, base::BindOnce(
+                           [](RejectTransactionCallback callback) {
+                             std::move(callback).Run(true);
+                           },
+                           std::move(callback)));
           },
           tx_state_manager_.get(), std::move(callback)));
 }

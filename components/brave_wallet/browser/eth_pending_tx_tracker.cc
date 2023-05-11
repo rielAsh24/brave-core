@@ -139,7 +139,7 @@ void EthPendingTxTracker::ContinueOnGetTxReceipt(
     meta->set_tx_receipt(receipt);
     meta->set_status(mojom::TransactionStatus::Confirmed);
     meta->set_confirmed_time(base::Time::Now());
-    tx_state_manager_->AddOrUpdateTx(*meta);
+    tx_state_manager_->AddOrUpdateTx(*meta, base::DoNothing());
   } else if (ShouldTxDropped(*meta)) {
     DropTransaction(meta.get());
   }
@@ -216,7 +216,7 @@ void EthPendingTxTracker::DropTransaction(TxMeta* meta) {
   if (!meta) {
     return;
   }
-  tx_state_manager_->DeleteTx(meta->chain_id(), meta->id());
+  tx_state_manager_->DeleteTx(meta->chain_id(), meta->id(), base::DoNothing());
 }
 
 }  // namespace brave_wallet
