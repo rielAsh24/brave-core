@@ -4,6 +4,7 @@
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #include "brave/components/brave_federated/config_utils.h"
+
 #include "brave/components/brave_federated/features.h"
 #include "brave/components/brave_federated/task/model.h"
 
