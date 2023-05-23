@@ -999,7 +999,7 @@ export async function sendFilTransaction (payload: SendFilTransactionParams) {
     value: payload.value
   }
   // @ts-expect-error google closure is ok with undefined for other fields but mojom runtime is not
-  return await apiProxy.txService.addUnapprovedTransaction({ filTxData: filTxData }, payload.from, null, null)
+  return await apiProxy.txService.addUnapprovedTransaction({ filTxData: filTxData }, payload.fromAccount.address, null, null)
 }
 
 export async function sendSolTransaction (payload: SendSolTransactionParams) {
@@ -1010,7 +1010,7 @@ export async function sendSolTransaction (payload: SendSolTransactionParams) {
     BigInt(payload.value)
   )
   // @ts-expect-error google closure is ok with undefined for other fields but mojom runtime is not
-  return await txService.addUnapprovedTransaction({ solanaTxData: value.txData }, payload.from, null, null)
+  return await txService.addUnapprovedTransaction({ solanaTxData: value.txData }, payload.fromAccount.address, null, null)
 }
 
 export async function sendSPLTransaction (payload: BraveWallet.SolanaTxData) {
