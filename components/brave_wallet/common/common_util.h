@@ -7,7 +7,6 @@
 #define BRAVE_COMPONENTS_BRAVE_WALLET_COMMON_COMMON_UTIL_H_
 
 #include <stddef.h>
-#include <vector>
 
 class PrefService;
 

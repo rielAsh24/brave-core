@@ -244,10 +244,8 @@ std::string FilAddress::EncodeAsString() const {
       base32::Base32Encode(input, base32::Base32EncodePolicy::OMIT_PADDING));
   if (protocol_ == mojom::FilecoinAddressProtocol::DELEGATED) {
     auto r = network_ + std::to_string(static_cast<int>(protocol_)) +
-             // Agent id
-             "10" +
-             // Delimiter between agent_id and pubkey
-             "f" + encoded_output;
+             // Agent id + delimiter
+             "10f" + encoded_output;
     return r;
   } else {
     return network_ + std::to_string(static_cast<int>(protocol_)) +

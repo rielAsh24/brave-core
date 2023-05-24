@@ -6,7 +6,6 @@
 use crate::message::MessageAPI;
 use blake2b_simd::Params;
 use bls_signatures::Serialize;
-use cid::multihash::MultihashDigest;
 use core::{array::TryFromSliceError, num::ParseIntError};
 use fvm_ipld_encoding::to_vec;
 use fvm_ipld_encoding::DAG_CBOR;
@@ -16,6 +15,7 @@ use fvm_shared::crypto::signature::Signature;
 use fvm_shared::message::Message as UnsignedMessage;
 use libsecp256k1::util::{SECRET_KEY_SIZE, SIGNATURE_SIZE};
 use libsecp256k1::{sign, Message};
+use multihash::{Code, MultihashDigest};
 use thiserror::Error;
 
 pub struct PrivateKey(pub [u8; SECRET_KEY_SIZE]);
@@ -70,7 +70,7 @@ fn transaction_sign_secp56k1_raw(
 ) -> Result<Signature, SignerError> {
     let secret_key = libsecp256k1::SecretKey::parse_slice(&private_key.0)?;
     let message_ser = to_vec(message)?;
-    let hash = cid::multihash::Code::Blake2b256.digest(&message_ser);
+    let hash = Code::Blake2b256.digest(&message_ser);
     let message_cid = cid::Cid::new_v1(DAG_CBOR, hash);
     let message_digest = libsecp256k1::Message::parse_slice(&blake2b_256(&message_cid.to_bytes()))?;
 
@@ -92,7 +92,7 @@ fn transaction_sign_bls_raw(
 ) -> Result<Signature, SignerError> {
     let sk = bls_signatures::PrivateKey::from_bytes(&private_key.0)?;
     let message_ser = to_vec(message)?;
-    let hash = cid::multihash::Code::Blake2b256.digest(&message_ser);
+    let hash = Code::Blake2b256.digest(&message_ser);
     let message_cid = cid::Cid::new_v1(DAG_CBOR, hash);
     let sig = sk.sign(&message_cid.to_bytes());
     let signature = Signature::new_bls(sig.as_bytes());
