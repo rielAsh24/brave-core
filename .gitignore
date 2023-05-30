@@ -24,6 +24,7 @@ patches/**/*.patchinfo
 /third_party/rapidjson/src
 /third_party/rust/cxx
 /third_party/rust/either/v1/crate
+/third_party/macholib
 *.xcodeproj
 *.swp
 *.pyc
