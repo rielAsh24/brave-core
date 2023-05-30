@@ -1,5 +1,5 @@
 diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
-index 38b1cdc80c9ed286c79492933995c4e06e35a092..7b8f6862f2a1239241b7f6d5dfb89447fcea3015 100644
+index 38b1cdc80c9ed286c79492933995c4e06e35a092..4b72c57dd985115c11c492f304c33761cb7262dc 100644
 --- a/chrome/BUILD.gn
 +++ b/chrome/BUILD.gn
 @@ -192,6 +192,7 @@ if (!is_android && !is_mac) {
@@ -24,14 +24,16 @@ index 38b1cdc80c9ed286c79492933995c4e06e35a092..7b8f6862f2a1239241b7f6d5dfb89447
      extra_substitutions = [
        "CHROMIUM_BUNDLE_ID=$chrome_mac_bundle_id",
        "CHROMIUM_SHORT_NAME=$chrome_product_short_name",
-@@ -539,6 +541,7 @@ if (is_win) {
+@@ -539,7 +541,8 @@ if (is_win) {
        "//chrome/common:buildflags",
        "//chrome/common:version_header",
      ]
-+    deps += [ "//brave:brave_app" ]
- 
+-
++    deps += [ "//brave:brave_app", "//brave:brave_vpn_helper" ]
++    
      if (enable_stripping) {
        # At link time, preserve the global symbols specified in the .exports
+       # file. All other global symbols will be marked as private. The default
 @@ -611,7 +614,7 @@ if (is_win) {
      args =
          [
