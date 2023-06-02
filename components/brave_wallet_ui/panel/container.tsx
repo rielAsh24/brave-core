@@ -72,7 +72,39 @@ import { usePendingTransactions } from '../common/hooks/use-pending-transaction'
   return this.toString()
 }
 
+// BraveRewardsProxy.onInitialized(async () => {
+//   console.log('initializing rewards api')
+//   const balance = await BraveRewardsProxy.fetchBalance()
+//   console.log({
+//     balance
+//   })
+// })
+
 function Container () {
+  // React.useEffect(() => {
+  //   ;(async () => {
+  //     const enabled = await BraveRewardsProxy.getRewardsEnabled()
+  //     if (enabled) {
+  //       const balance = await BraveRewardsProxy.fetchBalance()
+  //       console.log({
+  //         balance
+  //       })
+
+  //       const rewardsWallet = await BraveRewardsProxy.getExternalWallet()
+  //       console.log({
+  //         rewardsWallet
+  //       })
+
+  //       // const notifications = await BraveRewardsProxy.getAllNotifications()
+  //       // console.log({
+  //       //   notifications
+  //       // })
+
+
+  //     }
+  //   })()
+  // }, [])
+
   // redux
   const dispatch = useDispatch()
 

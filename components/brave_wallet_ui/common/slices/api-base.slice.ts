@@ -35,6 +35,9 @@ export function createWalletApiBase() {
       'UserBlockchainTokens',
       'WalletInfo',
       'NftDiscoveryEnabledStatus',
+      'BraveRewards-Enabled',
+      'BraveRewards-RewardsBalance',
+      'BraveRewards-ExternalWallet',
     ],
     endpoints: ({ mutation, query }) => ({})
   })
@@ -46,3 +49,6 @@ export const walletApiBase: WalletApiBase = createWalletApiBase()
 export type WalletApiEndpointBuilder = Parameters<
   WalletApiBase['injectEndpoints']
 >[0]['endpoints']
+
+export type WalletApiEndpointBuilderParams =
+  Parameters<WalletApiEndpointBuilder>[0]

@@ -60,6 +60,11 @@ import {
 } from './entities/blockchain-token.entity'
 import { TokenBalancesForChainId } from './entities/token-balance.entity'
 
+// api
+import { apiProxyFetcher } from '../async/base-query-cache'
+import { createWalletApiBase } from './api-base.slice'
+import { braveRewardsApiEndpoints } from './endpoints/rewards.endpoints'
+
 // utils
 import { cacher, TX_CACHE_TAGS } from '../../utils/query-cache-utils'
 import type WalletApiProxy from '../wallet_api_proxy'
@@ -88,8 +93,6 @@ import {
   signLedgerSolanaTransaction,
   signTrezorTransaction
 } from '../async/hardware'
-import { apiProxyFetcher } from '../async/base-query-cache'
-import { createWalletApiBase } from './api-base.slice'
 
 export type AssetPriceById = BraveWallet.AssetPrice & {
   id: EntityId
@@ -2619,7 +2622,7 @@ export function createWalletApi () {
       })
     }}
   })
-    // panel endpoints
+    .injectEndpoints({ endpoints: braveRewardsApiEndpoints })
     .injectEndpoints({
       endpoints: ({ mutation, query }) => ({
         openPanelUI: mutation<boolean, void>({
@@ -2660,9 +2663,12 @@ export const {
   useGetCombinedTokenBalanceForAllAccountsQuery,
   useGetDefaultFiatCurrencyQuery,
   useGetERC721MetadataQuery,
+  useGetExternalRewardsWalletQuery,
   useGetGasEstimation1559Query,
   useGetNetworksRegistryQuery,
   useGetNftDiscoveryEnabledStatusQuery,
+  useGetRewardsBalanceQuery,
+  useGetRewardsEnabledQuery,
   useGetSelectedAccountAddressQuery,
   useGetSelectedChainQuery,
   useGetSolanaEstimatedFeeQuery,
@@ -2680,8 +2686,12 @@ export const {
   useLazyGetCombinedTokenBalanceForAllAccountsQuery,
   useLazyGetDefaultFiatCurrencyQuery,
   useLazyGetERC721MetadataQuery,
+  useLazyGetExternalRewardsWalletQuery,
   useLazyGetGasEstimation1559Query,
   useLazyGetNetworksRegistryQuery,
+  useLazyGetNftDiscoveryEnabledStatusQuery,
+  useLazyGetRewardsBalanceQuery,
+  useLazyGetRewardsEnabledQuery,
   useLazyGetSelectedAccountAddressQuery,
   useLazyGetSelectedChainQuery,
   useLazyGetSolanaEstimatedFeeQuery,
