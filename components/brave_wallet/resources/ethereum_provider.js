@@ -7,6 +7,30 @@
   if (!window.ethereum) {
     return
   }
+
+  let provider = window.ethereum
+
+  function announceProvider() {
+    const info = {
+      walletId: "com.brave.wallet",
+      uuid: "ddfc69a4-c1f4-460e-883a-992f88768954",
+      name: "Brave Wallet",
+      icon: "TBD",
+    };
+    window.dispatchEvent(
+      new CustomEvent("eip6963:announceProvider", {
+        detail: { info, provider },
+      })
+    );
+  }
+
+  window.addEventListener(
+    "eip6963:requestProvider",
+    (event) => {
+      announceProvider();
+    }
+  );
+
   var EventEmitter = require('events')
   var BraveWeb3ProviderEventEmitter = new EventEmitter()
   $Object.defineProperties(window.ethereum, {
