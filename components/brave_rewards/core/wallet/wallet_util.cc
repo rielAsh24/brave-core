@@ -111,21 +111,6 @@ mojom::ExternalWalletPtr ExternalWalletPtrFromJSON(std::string wallet_string,
     wallet->member_id = *member_id;
   }
 
-  const auto* account_url = dict.FindString("account_url");
-  if (account_url) {
-    wallet->account_url = *account_url;
-  }
-
-  auto* login_url = dict.FindString("login_url");
-  if (login_url) {
-    wallet->login_url = *login_url;
-  }
-
-  const auto* activity_url = dict.FindString("activity_url");
-  if (activity_url) {
-    wallet->activity_url = *activity_url;
-  }
-
   if (const auto* fees = dict.FindDict("fees")) {
     for (const auto [k, v] : *fees) {
       if (!v.is_double()) {
@@ -151,7 +136,7 @@ mojom::ExternalWalletPtr GetWallet(LedgerImpl& ledger,
     return nullptr;
   }
 
-  return ExternalWalletPtrFromJSON(*json, wallet_type);
+  return GenerateLinks(ExternalWalletPtrFromJSON(*json, wallet_type));
 }
 
 mojom::ExternalWalletPtr GetWalletIf(
@@ -202,9 +187,6 @@ bool SetWallet(LedgerImpl& ledger, mojom::ExternalWalletPtr wallet) {
   new_wallet.Set("code_verifier", wallet->code_verifier);
   new_wallet.Set("user_name", wallet->user_name);
   new_wallet.Set("member_id", wallet->member_id);
-  new_wallet.Set("account_url", wallet->account_url);
-  new_wallet.Set("login_url", wallet->login_url);
-  new_wallet.Set("activity_url", wallet->activity_url);
   new_wallet.Set("fees", std::move(fees));
 
   std::string json;

@@ -40,8 +40,6 @@ TEST_F(WalletUtilTest, ExternalWalletPtrFromJSON) {
       "  \"one_time_string\": \"eda4c873eac72e1ecc30e77b25bb623b8b5bf99f\",\n"
       "  \"status\": 2,\n"
       "  \"user_name\": \"random_user\",\n"
-      "  \"account_url\": \"https://random.domain/account\","
-      "  \"login_url\": \"https://random.domain/login\","
       "  \"fees\": {\"brave\": 5.00}"
       "}\n";
 
@@ -52,8 +50,6 @@ TEST_F(WalletUtilTest, ExternalWalletPtrFromJSON) {
             "eda4c873eac72e1ecc30e77b25bb623b8b5bf99f");
   EXPECT_EQ(wallet->status, mojom::WalletStatus::kConnected);
   EXPECT_EQ(wallet->user_name, "random_user");
-  EXPECT_EQ(wallet->account_url, "https://random.domain/account");
-  EXPECT_EQ(wallet->login_url, "https://random.domain/login");
   EXPECT_NE(wallet->fees.find("brave"), wallet->fees.end());
   EXPECT_EQ(wallet->fees["brave"], 5.00);
 }
