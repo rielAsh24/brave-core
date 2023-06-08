@@ -4,23 +4,23 @@
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
 source_set("interactive") {
-sources = [
-"status_icon_win.cc",
-"status_icon_win.h",
-"status_tray.cc",
-"status_tray.h",
-"status_tray_win.cc",
-"status_tray_win.h",
-"status_tray_state_changer_win.cc",
-"status_tray_state_changer_win.h"
-]
+  sources = [
+    "status_icon_win.cc",
+    "status_icon_win.h",
+    "status_tray.cc",
+    "status_tray.h",
+    "status_tray_state_changer_win.cc",
+    "status_tray_state_changer_win.h",
+    "status_tray_win.cc",
+    "status_tray_win.h",
+  ]
 
-deps = [
-"//base",
-"//ui/gfx",
-"//ui/display",
-"//ui/message_center/public/cpp",
-"//ui/views",
-"//ui/gfx/geometry",
-]
+  deps = [
+    "//base",
+    "//ui/display",
+    "//ui/gfx",
+    "//ui/gfx/geometry",
+    "//ui/message_center/public/cpp",
+    "//ui/views",
+  ]
 }
