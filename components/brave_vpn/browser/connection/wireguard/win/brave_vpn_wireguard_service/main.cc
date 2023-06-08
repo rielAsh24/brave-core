@@ -82,6 +82,12 @@ int main(int argc, char* argv[]) {
         command_line->GetSwitchValuePath(
             brave_vpn::kBraveVpnWireguardServiceConnectSwitchName));
   }
+  if (command_line->HasSwitch(
+          brave_vpn::kBraveVpnWireguardServiceInteractiveSwitchName)) {
+    return brave_vpn::wireguard::RunWireguardTunnelService(
+        command_line->GetSwitchValuePath(
+            brave_vpn::kBraveVpnWireguardServiceConnectSwitchName));
+  }
 
   // Register vpn helper service in the system.
   if (command_line->HasSwitch(
