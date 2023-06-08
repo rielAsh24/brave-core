@@ -56,6 +56,7 @@ executable("brave_vpn_wireguard_service") {
     ":brave_vpn_wireguard_binaries",
     ":common",
     ":version_resources",
+    "interactive",
     "//base",
     "//base:base_static",
     "//brave/components/brave_vpn/browser/connection/common/win",

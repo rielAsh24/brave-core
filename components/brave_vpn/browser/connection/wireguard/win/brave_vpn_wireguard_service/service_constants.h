@@ -18,6 +18,9 @@ constexpr wchar_t kBraveVpnWireguardServiceExecutable[] =
     L"brave_vpn_wireguard_service.exe";
 constexpr char kBraveVpnWireguardServiceInstallSwitchName[] = "install";
 constexpr char kBraveVpnWireguardServiceConnectSwitchName[] = "connect";
+// In this mode the service started on user level and expose UI interfaces
+// to work with the service for a user.
+constexpr char kBraveVpnWireguardServiceInteractiveSwitchName[] = "interactive";
 
 const CLSID& GetBraveVpnWireguardServiceClsid();
 const IID& GetBraveVpnWireguardServiceIid();
