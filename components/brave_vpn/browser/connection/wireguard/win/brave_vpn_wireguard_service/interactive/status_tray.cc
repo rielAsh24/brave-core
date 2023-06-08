@@ -5,13 +5,13 @@
 
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
 
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_win.h"
 
 StatusTray::~StatusTray() {}
 
 StatusIcon* StatusTray::CreateStatusIcon(const gfx::ImageSkia& image,
                                          const std::u16string& tool_tip) {
-  auto icon = CreatePlatformStatusIcon(type, image, tool_tip);
+  auto icon = CreatePlatformStatusIcon(image, tool_tip);
   if (!icon) {
     return nullptr;
   }

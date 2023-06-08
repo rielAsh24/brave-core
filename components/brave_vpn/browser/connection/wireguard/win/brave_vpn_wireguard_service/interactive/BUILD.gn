@@ -5,6 +5,9 @@
 
 source_set("interactive") {
   sources = [
+    "status_icon.cc",
+    "status_icon.h",
+    "status_icon_observer.h",
     "status_icon_win.cc",
     "status_icon_win.h",
     "status_tray.cc",
@@ -23,4 +26,6 @@ source_set("interactive") {
     "//ui/message_center/public/cpp",
     "//ui/views",
   ]
+
+  libs = ["Shell32.lib"]
 }
