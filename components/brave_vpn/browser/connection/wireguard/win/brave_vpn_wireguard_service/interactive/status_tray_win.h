@@ -1,5 +1,5 @@
-#ifndef CHROME_BROWSER_UI_VIEWS_STATUS_ICONS_STATUS_TRAY_WIN_H_
-#define CHROME_BROWSER_UI_VIEWS_STATUS_ICONS_STATUS_TRAY_WIN_H_
+#ifndef BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_TRAY_WIN_H_
+#define BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_TRAY_WIN_H_
 
 #include <windows.h>
 
@@ -7,7 +7,6 @@
 
 #include "base/gtest_prod_util.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
-
 
 class StatusIconWin;
 
@@ -35,8 +34,10 @@ class StatusTrayWin : public StatusTray {
   void UpdateIconVisibilityInBackground(StatusIconWin* status_icon);
 
   // Exposed for testing.
-  LRESULT CALLBACK
-      WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+  LRESULT CALLBACK WndProc(HWND hwnd,
+                           UINT message,
+                           WPARAM wparam,
+                           LPARAM lparam);
 
  protected:
   // Overriden from StatusTray:
@@ -49,8 +50,10 @@ class StatusTrayWin : public StatusTray {
   FRIEND_TEST_ALL_PREFIXES(StatusTrayWinTest, EnsureVisibleTest);
 
   // Static callback invoked when a message comes in to our messaging window.
-  static LRESULT CALLBACK
-      WndProcStatic(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+  static LRESULT CALLBACK WndProcStatic(HWND hwnd,
+                                        UINT message,
+                                        WPARAM wparam,
+                                        LPARAM lparam);
 
   UINT NextIconId();
 
@@ -78,4 +81,4 @@ class StatusTrayWin : public StatusTray {
   std::unique_ptr<StatusTrayStateChangerProxy> state_changer_proxy_;
 };
 
-#endif  // CHROME_BROWSER_UI_VIEWS_STATUS_ICONS_STATUS_TRAY_WIN_H_
+#endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_TRAY_WIN_H_

@@ -2,15 +2,14 @@
 
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
 
-StatusTray::~StatusTray() {
-}
+StatusTray::~StatusTray() {}
 
-StatusIcon* StatusTray::CreateStatusIcon(
-                                         const gfx::ImageSkia& image,
+StatusIcon* StatusTray::CreateStatusIcon(const gfx::ImageSkia& image,
                                          const std::u16string& tool_tip) {
   auto icon = CreatePlatformStatusIcon(type, image, tool_tip);
-  if (!icon)
+  if (!icon) {
     return nullptr;
+  }
 
   status_icons_.push_back(std::move(icon));
   return status_icons_.back().get();
@@ -26,5 +25,4 @@ void StatusTray::RemoveStatusIcon(StatusIcon* icon) {
   NOTREACHED();
 }
 
-StatusTray::StatusTray() {
-}
+StatusTray::StatusTray() {}

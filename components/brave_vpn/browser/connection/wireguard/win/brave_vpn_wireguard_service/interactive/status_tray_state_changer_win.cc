@@ -23,9 +23,9 @@ class __declspec(uuid("FB852B2C-6BAD-4605-9551-F15F87830935")) ITrayNotify
     : public IUnknown {
  public:
   virtual HRESULT STDMETHODCALLTYPE
-      RegisterCallback(INotificationCB* callback) = 0;
+  RegisterCallback(INotificationCB* callback) = 0;
   virtual HRESULT STDMETHODCALLTYPE
-      SetPreference(const NOTIFYITEM* notify_item) = 0;
+  SetPreference(const NOTIFYITEM* notify_item) = 0;
   virtual HRESULT STDMETHODCALLTYPE EnableAutoTray(BOOL enabled) = 0;
 };
 
@@ -34,8 +34,8 @@ class __declspec(uuid("FB852B2C-6BAD-4605-9551-F15F87830935")) ITrayNotify
 class __declspec(uuid("D133CE13-3537-48BA-93A7-AFCD5D2053B4")) ITrayNotifyWin8
     : public IUnknown {
  public:
-  virtual HRESULT STDMETHODCALLTYPE
-      RegisterCallback(INotificationCB* callback, unsigned long*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE RegisterCallback(INotificationCB* callback,
+                                                     unsigned long*) = 0;
   virtual HRESULT STDMETHODCALLTYPE UnregisterCallback(unsigned long*) = 0;
   virtual HRESULT STDMETHODCALLTYPE SetPreference(NOTIFYITEM const*) = 0;
   virtual HRESULT STDMETHODCALLTYPE EnableAutoTray(BOOL) = 0;
@@ -72,12 +72,14 @@ void StatusTrayStateChangerWin::EnsureTrayIconVisible() {
 
   // If the user has already hidden us explicitly, try to honor their choice by
   // not changing anything.
-  if (notify_item->preference == PREFERENCE_SHOW_NEVER)
+  if (notify_item->preference == PREFERENCE_SHOW_NEVER) {
     return;
+  }
 
   // If we are already on the taskbar, return since nothing needs to be done.
-  if (notify_item->preference == PREFERENCE_SHOW_ALWAYS)
+  if (notify_item->preference == PREFERENCE_SHOW_ALWAYS) {
     return;
+  }
 
   notify_item->preference = PREFERENCE_SHOW_ALWAYS;
 
@@ -108,8 +110,9 @@ bool StatusTrayStateChangerWin::CreateTrayNotify() {
 
   HRESULT hr = ::CoCreateInstance(CLSID_TrayNotify, nullptr, CLSCTX_ALL,
                                   IID_PPV_ARGS(&tray_notify_));
-  if (FAILED(hr))
+  if (FAILED(hr)) {
     return false;
+  }
 
   Microsoft::WRL::ComPtr<ITrayNotifyWin8> tray_notify_win8;
   hr = tray_notify_.As(&tray_notify_win8);
@@ -138,12 +141,14 @@ std::unique_ptr<NOTIFYITEM> StatusTrayStateChangerWin::RegisterCallback() {
   // has a tendency to fail on particular versions of Windows.
   switch (interface_version_) {
     case INTERFACE_VERSION_WIN8:
-      if (!RegisterCallbackWin8())
+      if (!RegisterCallbackWin8()) {
         VLOG(1) << "Unable to successfully run RegisterCallbackWin8.";
+      }
       break;
     case INTERFACE_VERSION_LEGACY:
-      if (!RegisterCallbackLegacy())
+      if (!RegisterCallbackLegacy()) {
         VLOG(1) << "Unable to successfully run RegisterCallbackLegacy.";
+      }
       break;
     default:
       NOTREACHED_NORETURN();
@@ -155,8 +160,9 @@ std::unique_ptr<NOTIFYITEM> StatusTrayStateChangerWin::RegisterCallback() {
 bool StatusTrayStateChangerWin::RegisterCallbackWin8() {
   Microsoft::WRL::ComPtr<ITrayNotifyWin8> tray_notify_win8;
   HRESULT hr = tray_notify_.As(&tray_notify_win8);
-  if (FAILED(hr))
+  if (FAILED(hr)) {
     return false;
+  }
 
   // The following two lines cause Windows Explorer to call us back with all the
   // existing tray icons and their preference.  It would also presumably notify
@@ -202,12 +208,14 @@ void StatusTrayStateChangerWin::SendNotifyItemUpdate(
   if (interface_version_ == INTERFACE_VERSION_LEGACY) {
     Microsoft::WRL::ComPtr<ITrayNotify> tray_notify;
     HRESULT hr = tray_notify_.As(&tray_notify);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr)) {
       tray_notify->SetPreference(notify_item.get());
+    }
   } else if (interface_version_ == INTERFACE_VERSION_WIN8) {
     Microsoft::WRL::ComPtr<ITrayNotifyWin8> tray_notify;
     HRESULT hr = tray_notify_.As(&tray_notify);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr)) {
       tray_notify->SetPreference(notify_item.get());
+    }
   }
 }

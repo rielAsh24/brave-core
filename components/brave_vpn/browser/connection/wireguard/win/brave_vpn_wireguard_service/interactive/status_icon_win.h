@@ -1,8 +1,8 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_STATUS_ICONS_STATUS_ICON_WIN_H_
 #define CHROME_BROWSER_UI_VIEWS_STATUS_ICONS_STATUS_ICON_WIN_H_
 
-#include <windows.h>
 #include <shellapi.h>
+#include <windows.h>
 
 #include <memory>
 
