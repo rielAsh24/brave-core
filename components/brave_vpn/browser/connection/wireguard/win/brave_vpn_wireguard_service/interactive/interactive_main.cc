@@ -18,6 +18,8 @@
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/icon_util.h"
 #include "ui/gfx/image/image_family.h"
+#include "ui/base/resource/resource_bundle.h"
+
 
 namespace brave_vpn {
 namespace {
@@ -52,12 +54,18 @@ InteractiveMain::InteractiveMain() = default;
 InteractiveMain::~InteractiveMain() = default;
 
 void InteractiveMain::SetupStatusIcon() {
+  ui::ResourceBundle::InitSharedInstanceWithLocale(
+      "en", /*delegate=*/nullptr,
+      ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
+
   status_tray_ = StatusTray::Create();
 
   status_icon_ =
       status_tray_->CreateStatusIcon(GetStatusTrayIcon(), u"BraveVpn");
 
   std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
+  menu->AddItem(1000, u"Turn On Brave Vpn");
+  status_icon_->SetContextMenu(std::move(menu));
 }
 HRESULT InteractiveMain::Run() {
   base::SingleThreadTaskExecutor service_task_executor(

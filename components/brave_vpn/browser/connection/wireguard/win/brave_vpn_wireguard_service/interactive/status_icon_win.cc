@@ -18,6 +18,7 @@
 #include "ui/gfx/image/image_skia.h"
 #include "ui/views/controls/menu/menu_runner.h"
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // StatusIconWin, public:
 
@@ -62,6 +63,7 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
   if (!SetForegroundWindow(window_)) {
     return;
   }
+
 
   menu_runner_ = std::make_unique<views::MenuRunner>(
       menu_model_, views::MenuRunner::HAS_MNEMONICS);

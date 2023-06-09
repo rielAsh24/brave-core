@@ -29,16 +29,20 @@ source_set("interactive") {
     "status_tray_win.cc",
     "status_tray_win.h",
   ]
-
+  public_deps = [
+    "//skia",
+  ]
   deps = [
     ":interactive_resources",
     "//base",
+    "//base:i18n",
+    "//third_party/icu",
+    "//third_party/abseil-cpp:absl",
     "//ui/base",
     "//ui/display",
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/views",
-    "//third_party/abseil-cpp:absl",
   ]
 
   libs = [ "Shell32.lib" ]

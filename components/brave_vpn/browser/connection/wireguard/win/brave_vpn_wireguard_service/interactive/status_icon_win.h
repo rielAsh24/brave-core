@@ -7,13 +7,14 @@
 #define BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_WIN_H_
 
 #include <windows.h>  // windows.h must be included before shellapi.h
-#include <shellapi.h>
 
+#include <shellapi.h>
 #include <memory>
 
 #include "base/memory/raw_ptr.h"
 #include "base/win/scoped_gdi_object.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
+#include "ui/views/layout/layout_provider.h"
 
 namespace gfx {
 class Point;
@@ -70,7 +71,7 @@ class StatusIconWin : public StatusIcon {
 
   // The message identifier used for status icon messages.
   UINT message_id_;
-
+  views::LayoutProvider provider;
   // The currently-displayed icon for the window.
   base::win::ScopedHICON icon_;
 
