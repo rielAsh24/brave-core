@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/types/optional.h"
 #include "base/logging.h"
 #include "brave/components/brave_federated/task/model.h"
 #include "brave/third_party/flower/src/brave/flwr/serde.h"
