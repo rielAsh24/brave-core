@@ -77,5 +77,6 @@ executable("brave_vpn_wireguard_service") {
 
 process_version_rc_template("version_resources") {
   sources = [ "brave_vpn_wireguard_service.ver" ]
+
   output = "$target_gen_dir/brave_vpn_wireguard_service.rc"
 }

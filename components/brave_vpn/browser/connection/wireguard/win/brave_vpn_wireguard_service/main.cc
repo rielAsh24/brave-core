@@ -14,6 +14,7 @@
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/brave_wireguard_service_crash_reporter_client.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/service_constants.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/service_main.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/interactive_main.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/service_utils.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/wireguard_tunnel_service.h"
 #include "chrome/install_static/product_install_details.h"
@@ -45,9 +46,10 @@ int main(int argc, char* argv[]) {
   // The exit manager is in charge of calling the dtors of singletons.
   base::AtExitManager exit_manager;
   std::string process_type = command_line->GetSwitchValueASCII(kProcessType);
-
-  BraveWireguardCrashReporterClient::InitializeCrashReportingForProcess(
-      process_type);
+  if (!process_type.empty()) {
+    BraveWireguardCrashReporterClient::InitializeCrashReportingForProcess(
+        process_type);
+  }
   if (process_type == crash_reporter::switches::kCrashpadHandler) {
     crash_reporter::SetupFallbackCrashHandling(*command_line);
     // The handler process must always be passed the user data dir on the
@@ -84,9 +86,7 @@ int main(int argc, char* argv[]) {
   }
   if (command_line->HasSwitch(
           brave_vpn::kBraveVpnWireguardServiceInteractiveSwitchName)) {
-    return brave_vpn::wireguard::RunWireguardTunnelService(
-        command_line->GetSwitchValuePath(
-            brave_vpn::kBraveVpnWireguardServiceConnectSwitchName));
+    return brave_vpn::InteractiveMain::GetInstance()->Run();
   }
 
   // Register vpn helper service in the system.

@@ -12,6 +12,7 @@
 
 #include "base/functional/bind.h"
 #include "base/location.h"
+#include "base/files/file_path.h"
 #include "base/sequence_checker.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/threading/thread.h"
@@ -28,10 +29,13 @@ static const UINT kStatusIconMessage = WM_APP + 1;
 namespace {
 // |kBaseIconId| is 2 to avoid conflicts with plugins that hard-code id 1.
 const UINT kBaseIconId = 2;
+const base::FilePath::CharType kStatusTrayWindowClass[] =
+    FILE_PATH_LITERAL("BraveVpn_StatusTrayWindow");
 
-UINT ReservedIconId(StatusTray::StatusIconType type) {
-  return kBaseIconId + static_cast<UINT>(type);
-}
+const base::FilePath::CharType kBraveVpnTaskbarMessageName[] =
+    FILE_PATH_LITERAL("BraveVpnTaskbarCreated");
+    
+    
 
 }  // namespace
 
@@ -105,7 +109,7 @@ StatusTrayWin::StatusTrayWin()
   // Register our window class
   WNDCLASSEX window_class;
   base::win::InitializeWindowClass(
-      chrome::kStatusTrayWindowClass,
+      kStatusTrayWindowClass,
       &base::win::WrappedWindowProc<StatusTrayWin::WndProcStatic>, 0, 0, 0,
       NULL, NULL, NULL, NULL, NULL, &window_class);
   instance_ = window_class.hInstance;
@@ -114,12 +118,12 @@ StatusTrayWin::StatusTrayWin()
 
   // If the taskbar is re-created after we start up, we have to rebuild all of
   // our icons.
-  taskbar_created_message_ = RegisterWindowMessage(TEXT("TaskbarCreated"));
+  taskbar_created_message_ = RegisterWindowMessage(kBraveVpnTaskbarMessageName);
 
   // Create an offscreen window for handling messages for the status icons. We
   // create a hidden WS_POPUP window instead of an HWND_MESSAGE window, because
   // only top-level windows such as popups can receive broadcast messages like
-  // "TaskbarCreated".
+  // "BraveVpnTaskbarCreated".
   window_ = CreateWindow(MAKEINTATOM(atom_), 0, WS_POPUP, 0, 0, 0, 0, 0, 0,
                          instance_, 0);
   gfx::CheckWindowCreated(window_, ::GetLastError());
@@ -210,33 +214,21 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
     // If Chrome is in background-only mode, this is the only notification
     // it gets that Windows is exiting. Make sure we shutdown in an orderly
     // fashion.
-    chrome::SessionEnding();
+    //chrome::SessionEnding();
   }
   return ::DefWindowProc(hwnd, message, wparam, lparam);
 }
 
 std::unique_ptr<StatusIcon> StatusTrayWin::CreatePlatformStatusIcon(
-    StatusTray::StatusIconType type,
     const gfx::ImageSkia& image,
     const std::u16string& tool_tip) {
-  UINT next_icon_id;
-  if (type == StatusTray::OTHER_ICON) {
-    next_icon_id = NextIconId();
-  } else {
-    next_icon_id = ReservedIconId(type);
-  }
-
+  UINT next_icon_id = kBaseIconId;
   auto icon = std::make_unique<StatusIconWin>(this, next_icon_id, window_,
                                               kStatusIconMessage);
 
   icon->SetImage(image);
   icon->SetToolTip(tool_tip);
   return std::move(icon);
-}
-
-UINT StatusTrayWin::NextIconId() {
-  UINT icon_id = next_icon_id_++;
-  return kBaseIconId + static_cast<UINT>(NAMED_STATUS_ICON_COUNT) + icon_id;
 }
 
 void StatusTrayWin::SetStatusTrayStateChangerProxyForTest(
