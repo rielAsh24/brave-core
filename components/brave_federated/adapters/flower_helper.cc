@@ -125,7 +125,7 @@ TaskList ParseTaskListFromResponseBody(const std::string &response_body) {
   return {};
 }
 
-std::string BuildPostTaskResultsPayload(const TaskResult& result) {
+std::string BuildUploadTaskResultsPayload(const TaskResult& result) {
   const Task task = result.GetTask();
   const TaskId task_id = task.GetId();
   const TaskType task_type = task.GetType();

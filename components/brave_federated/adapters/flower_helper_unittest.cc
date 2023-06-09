@@ -207,7 +207,7 @@ TEST(BraveFederatedLearningFlowerHelperTest, BuildPostTrainTaskResultsPayload) {
   TaskResult task_result = TaskResult(task, performance_report);
 
   // Act
-  const std::string payload = BuildPostTaskResultsPayload(task_result);
+  const std::string payload = BuildUploadTaskResultsPayload(task_result);
 
   // Assert
   flower::PushTaskResRequest request;
@@ -252,7 +252,7 @@ TEST(BraveFederatedLearningFlowerHelperTest,
   TaskResult task_result = TaskResult(task, performance_report);
 
   // Act
-  const std::string payload = BuildPostTaskResultsPayload(task_result);
+  const std::string payload = BuildUploadTaskResultsPayload(task_result);
 
   // Assert
   flower::PushTaskResRequest request;

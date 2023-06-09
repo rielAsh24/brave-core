@@ -5,11 +5,10 @@
 
 #include "brave/components/brave_federated/config_utils.h"
 
-#include "brave/components/brave_federated/features.h"
-#include "brave/components/brave_federated/task/model.h"
-
 #include "base/json/json_reader.h"
 #include "base/json/json_value_converter.h"
+#include "brave/components/brave_federated/features.h"
+#include "brave/components/brave_federated/task/model.h"
 
 namespace brave_federated {
 
@@ -58,13 +57,13 @@ LearningServiceConfig::LearningServiceConfig(const base::FilePath& path)
   InitServiceConfigFromJSONString(data);
 }
 
-LearningServiceConfig::LearningServiceConfig(const std::string data)
+LearningServiceConfig::LearningServiceConfig(const std::string& data)
     : LearningServiceConfig::LearningServiceConfig() {
   InitServiceConfigFromJSONString(data);
 }
 
 void LearningServiceConfig::InitServiceConfigFromJSONString(
-    const std::string data) {
+    const std::string& data) {
   const absl::optional<base::Value> root =
       base::JSONReader::Read(data, base::JSON_PARSE_CHROMIUM_EXTENSIONS |
                                        base::JSONParserOptions::JSON_PARSE_RFC);
