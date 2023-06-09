@@ -61,7 +61,7 @@ class StatusIconWin : public StatusIcon {
 
  protected:
   // Overridden from StatusIcon:
-  //void UpdatePlatformContextMenu(StatusIconMenuModel* menu) override;
+  void UpdatePlatformContextMenu(StatusIconMenuModel* menu) override;
 
  private:
   void InitIconData(NOTIFYICONDATA* icon_data);
@@ -85,7 +85,7 @@ class StatusIconWin : public StatusIcon {
   base::win::ScopedHICON balloon_icon_;
 
   // Not owned.
-  //raw_ptr<ui::MenuModel> menu_model_ = nullptr;
+  raw_ptr<ui::MenuModel> menu_model_ = nullptr;
 
   // Context menu associated with this icon (if any).
   std::unique_ptr<views::MenuRunner> menu_runner_;

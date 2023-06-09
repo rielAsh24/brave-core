@@ -25,6 +25,8 @@ source_set("interactive") {
     "status_tray_state_changer_win.h",
     "status_tray_win.cc",
     "status_tray_win.h",
+    "status_icon_menu_model.cc",
+    "status_icon_menu_model.h",
     "interactive_main.cc",
     "interactive_main.h",
   ]

@@ -7,6 +7,7 @@
 
 #include <wrl/client.h>
 
+#include "base/logging.h"
 #include "base/task/single_thread_task_executor.h"
 #include "base/run_loop.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
@@ -26,11 +27,10 @@ std::unique_ptr<gfx::ImageFamily> GetAppIconImageFamily() {
   HMODULE module = GetModuleHandle(nullptr);
   DCHECK(module);
   return IconUtil::CreateImageFamilyFromIconResource(module, icon_id);
-
 }
 
 gfx::ImageSkia GetStatusTrayIcon() {
-  gfx::Size size(32, 32);
+  gfx::Size size(128, 128);
   std::unique_ptr<gfx::ImageFamily> family = GetAppIconImageFamily();
   DCHECK(family);
   if (!family)
@@ -56,6 +56,8 @@ void InteractiveMain::SetupStatusIcon() {
   status_icon_ = status_tray_->CreateStatusIcon(
       GetStatusTrayIcon(),
       u"BraveVpn");
+  
+  std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
 
 }
 HRESULT InteractiveMain::Run() {
@@ -71,6 +73,10 @@ HRESULT InteractiveMain::Run() {
 
 void InteractiveMain::SignalExit() {
   std::move(quit_).Run();
+}
+
+void InteractiveMain::ExecuteCommand(int command_id, int event_flags) {
+  LOG(ERROR) << __func__ << ":" << command_id;
 }
 
 }  // namespace brave_vpn

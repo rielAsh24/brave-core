@@ -10,12 +10,14 @@
 #include "base/no_destructor.h"
 #include "base/win/windows_types.h"
 
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_menu_model.h"
+
 class StatusIcon;
 class StatusTray;
 
 namespace brave_vpn {
 
-class InteractiveMain {
+class InteractiveMain: public StatusIconMenuModel::Delegate {
  public:
   static InteractiveMain* GetInstance();
 
@@ -26,12 +28,14 @@ class InteractiveMain {
 
   HRESULT Run();
   void SignalExit();
+  // StatusIconMenuModel::Delegate
+  void ExecuteCommand(int command_id, int event_flags) override;
 
  private:
   friend class base::NoDestructor<InteractiveMain>;
 
   InteractiveMain();
-  ~InteractiveMain();
+  ~InteractiveMain() override;
 
   std::unique_ptr<StatusTray> status_tray_;
   // Reference to our status icon (if any) - owned by the StatusTray.

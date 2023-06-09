@@ -20,7 +20,8 @@
 #include "base/win/wrapped_window_proc.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive//status_tray_state_changer_win.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_win.h"
-#include "ui/display/screen.h"
+#include "ui/gfx/geometry/point_conversions.h"
+#include "ui/display/win/screen_win.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/win/hwnd_util.h"
 
@@ -36,6 +37,12 @@ const base::FilePath::CharType kBraveVpnTaskbarMessageName[] =
     FILE_PATH_LITERAL("BraveVpnTaskbarCreated");
     
     
+gfx::Point GetCursorScreenPoint() {
+  POINT pt;
+  ::GetCursorPos(&pt);
+  return gfx::ToFlooredPoint(display::win::ScreenWin::ScreenToDIPPoint(
+    gfx::PointF(gfx::Point(pt))));
+}
 
 }  // namespace
 
@@ -194,7 +201,7 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
     if (!win_icon) {
       return TRUE;
     }
-
+    LOG(ERROR) << "icon:" << win_icon;
     switch (lparam) {
       case TB_INDETERMINATE:
         win_icon->HandleBalloonClickEvent();
@@ -205,8 +212,8 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
       case WM_CONTEXTMENU:
         // Walk our icons, find which one was clicked on, and invoke its
         // HandleClickEvent() method.
-        gfx::Point cursor_pos(
-            display::Screen::GetScreen()->GetCursorScreenPoint());
+        LOG(ERROR) << "Screen:" << display::Screen::GetScreen();
+        gfx::Point cursor_pos(GetCursorScreenPoint());
         win_icon->HandleClickEvent(cursor_pos, lparam == WM_LBUTTONDOWN);
         return TRUE;
     }
