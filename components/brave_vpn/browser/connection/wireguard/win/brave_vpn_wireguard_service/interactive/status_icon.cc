@@ -33,14 +33,6 @@ void StatusIcon::DispatchClickEvent() {
   }
 }
 
-#if BUILDFLAG(IS_WIN)
-void StatusIcon::DispatchBalloonClickEvent() {
-  for (StatusIconObserver& observer : observers_) {
-    observer.OnBalloonClicked();
-  }
-}
-#endif
-
 void StatusIcon::ForceVisible() {}
 
 void StatusIcon::SetContextMenu(std::unique_ptr<StatusIconMenuModel> menu) {

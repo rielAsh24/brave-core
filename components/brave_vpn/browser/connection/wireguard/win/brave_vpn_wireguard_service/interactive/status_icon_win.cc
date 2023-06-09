@@ -16,7 +16,6 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/icon_util.h"
 #include "ui/gfx/image/image_skia.h"
-#include "ui/message_center/public/cpp/notifier_id.h"
 #include "ui/views/controls/menu/menu_runner.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +49,7 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
                                      bool left_mouse_click) {
   // Pass to the observer if appropriate.
   if (left_mouse_click && HasObservers()) {
-    //DispatchClickEvent();
+    DispatchClickEvent();
     return;
   }
 
@@ -69,12 +68,6 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
   menu_runner_->RunMenuAt(nullptr, nullptr, gfx::Rect(cursor_pos, gfx::Size()),
                           views::MenuAnchorPosition::kTopLeft,
                           ui::MENU_SOURCE_MOUSE);
-}
-
-void StatusIconWin::HandleBalloonClickEvent() {
-  if (HasObservers()) {
-    //DispatchBalloonClickEvent();
-  }
 }
 
 void StatusIconWin::ResetIcon() {
@@ -120,31 +113,6 @@ void StatusIconWin::SetToolTip(const std::u16string& tool_tip) {
   BOOL result = Shell_NotifyIcon(NIM_MODIFY, &icon_data);
   if (!result) {
     LOG(WARNING) << "Unable to set tooltip for status tray icon";
-  }
-}
-
-void StatusIconWin::DisplayBalloon(
-    const gfx::ImageSkia& icon,
-    const std::u16string& title,
-    const std::u16string& contents,
-    const message_center::NotifierId& notifier_id) {
-  NOTIFYICONDATA icon_data;
-  InitIconData(&icon_data);
-  icon_data.uFlags = NIF_INFO;
-  icon_data.dwInfoFlags = NIIF_INFO;
-  wcscpy_s(icon_data.szInfoTitle, base::as_wcstr(title));
-  wcscpy_s(icon_data.szInfo, base::as_wcstr(contents));
-  icon_data.uTimeout = 0;
-
-  if (!icon.isNull()) {
-    balloon_icon_ = IconUtil::CreateHICONFromSkBitmap(*icon.bitmap());
-    icon_data.hBalloonIcon = balloon_icon_.get();
-    icon_data.dwInfoFlags = NIIF_USER | NIIF_LARGE_ICON;
-  }
-
-  BOOL result = Shell_NotifyIcon(NIM_MODIFY, &icon_data);
-  if (!result) {
-    LOG(WARNING) << "Unable to create status tray balloon.";
   }
 }
 

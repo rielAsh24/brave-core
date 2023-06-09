@@ -40,9 +40,6 @@ class StatusIconWin : public StatusIcon {
   // otherwise displays the context menu if there is one.
   void HandleClickEvent(const gfx::Point& cursor_pos, bool left_button_click);
 
-  // Handles a click on the balloon from the user.
-  void HandleBalloonClickEvent();
-
   // Re-creates the status tray icon now after the taskbar has been created.
   void ResetIcon();
 
@@ -53,10 +50,6 @@ class StatusIconWin : public StatusIcon {
   // Overridden from StatusIcon:
   void SetImage(const gfx::ImageSkia& image) override;
   void SetToolTip(const std::u16string& tool_tip) override;
-  void DisplayBalloon(const gfx::ImageSkia& icon,
-                      const std::u16string& title,
-                      const std::u16string& contents,
-                      const message_center::NotifierId& notifier_id) override;
   void ForceVisible() override;
 
  protected:
@@ -77,12 +70,6 @@ class StatusIconWin : public StatusIcon {
 
   // The message identifier used for status icon messages.
   UINT message_id_;
-
-  // The currently-displayed icon for the window.
-  base::win::ScopedHICON icon_;
-
-  // The currently-displayed icon for the notification balloon.
-  base::win::ScopedHICON balloon_icon_;
 
   // Not owned.
   raw_ptr<ui::MenuModel> menu_model_ = nullptr;

@@ -41,14 +41,6 @@ class StatusIcon {
   // status icon (e.g. Ubuntu Unity).
   virtual void SetToolTip(const std::u16string& tool_tip) = 0;
 
-  // Displays a notification balloon with the specified contents.
-  // Depending on the platform it might not appear by the icon tray.
-  virtual void DisplayBalloon(
-      const gfx::ImageSkia& icon,
-      const std::u16string& title,
-      const std::u16string& contents,
-      const message_center::NotifierId& notifier_id) = 0;
-
   // Set the context menu for this icon. The icon takes ownership of the passed
   // context menu. Passing NULL results in no menu at all.
   void SetContextMenu(std::unique_ptr<StatusIconMenuModel> menu);
