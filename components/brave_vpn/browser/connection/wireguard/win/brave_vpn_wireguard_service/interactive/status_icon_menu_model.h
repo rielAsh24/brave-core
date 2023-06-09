@@ -1,10 +1,9 @@
-/* Copyright (c) 2023 The Brave Authors. All rights reserved.
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+// Copyright 2013 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 
-#ifndef BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_MENU_MODEL_H_
-#define BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_MENU_MODEL_H_
+#ifndef CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_MENU_MODEL_H_
+#define CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_MENU_MODEL_H_
 
 #include <map>
 
@@ -23,9 +22,10 @@ class Image;
 // model state has changed and can tell the status icon to update the menu. This
 // is necessary some platforms which do not notify us before showing the menu
 // (like Ubuntu Unity).
-class StatusIconMenuModel : public ui::SimpleMenuModel,
-                            public ui::SimpleMenuModel::Delegate,
-                            public base::SupportsWeakPtr<StatusIconMenuModel> {
+class StatusIconMenuModel
+    : public ui::SimpleMenuModel,
+      public ui::SimpleMenuModel::Delegate,
+      public base::SupportsWeakPtr<StatusIconMenuModel> {
  public:
   class Delegate {
    public:
@@ -61,8 +61,8 @@ class StatusIconMenuModel : public ui::SimpleMenuModel,
   void SetCommandIdVisible(int command_id, bool visible);
 
   // Sets the accelerator for the specified command id.
-  void SetAcceleratorForCommandId(int command_id,
-                                  const ui::Accelerator* accelerator);
+  void SetAcceleratorForCommandId(
+      int command_id, const ui::Accelerator* accelerator);
 
   // Calling any of these "change" methods will mark the menu item as "dynamic"
   // (see menu_model.h:IsItemDynamicAt) which many platforms take as a cue to
@@ -109,4 +109,4 @@ class StatusIconMenuModel : public ui::SimpleMenuModel,
   raw_ptr<Delegate> delegate_;
 };
 
-#endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_MENU_MODEL_H_
+#endif  // CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_MENU_MODEL_H_

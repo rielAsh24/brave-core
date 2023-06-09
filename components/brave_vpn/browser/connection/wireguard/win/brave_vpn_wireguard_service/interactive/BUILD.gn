@@ -37,7 +37,8 @@ source_set("interactive") {
     "//ui/display",
     "//ui/gfx",
     "//ui/gfx/geometry",
-    "//ui/views"
+    "//ui/views",
+    "//third_party/abseil-cpp:absl",
   ]
 
   libs = [ "Shell32.lib" ]
