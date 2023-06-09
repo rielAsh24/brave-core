@@ -8,15 +8,14 @@ import("//testing/test.gni")
 
 static_library("data_stores") {
   sources = [
-    "async_data_store.h",
     "async_data_store.cc",
-    "data_store.h",
+    "async_data_store.h",
     "data_store.cc",
+    "data_store.h",
   ]
 
   deps = [
     "//sql",
     "//third_party/abseil-cpp:absl",
   ]
-
 }

@@ -21,7 +21,7 @@ namespace brave_federated {
 
 std::vector<Weights> g_test_parameters = {{1, 2, 3}, {4, 5, 6}};
 std::map<std::string, double> g_config_metrics = {{"loss", 0.42},
-                                                {"accuracy", 42.0}};
+                                                  {"accuracy", 42.0}};
 
 TEST(BraveFederatedLearningFlowerHelperTest, BuildAnonymousGetTasksPayload) {
   // Arrange
@@ -202,8 +202,8 @@ TEST(BraveFederatedLearningFlowerHelperTest, BuildPostTrainTaskResultsPayload) {
   float accuracy = 42.0;
   std::map<std::string, double> metrics = {{"alpha", 0.42}, {"beta", 42.0}};
 
-  PerformanceReport performance_report =
-      PerformanceReport(dataset_size, loss, accuracy, g_test_parameters, metrics);
+  PerformanceReport performance_report = PerformanceReport(
+      dataset_size, loss, accuracy, g_test_parameters, metrics);
   TaskResult task_result = TaskResult(task, performance_report);
 
   // Act
@@ -247,8 +247,8 @@ TEST(BraveFederatedLearningFlowerHelperTest,
   float accuracy = 42.0;
   std::map<std::string, double> metrics = {{"alpha", 0.42}, {"beta", 42.0}};
 
-  PerformanceReport performance_report =
-      PerformanceReport(dataset_size, loss, accuracy, g_test_parameters, metrics);
+  PerformanceReport performance_report = PerformanceReport(
+      dataset_size, loss, accuracy, g_test_parameters, metrics);
   TaskResult task_result = TaskResult(task, performance_report);
 
   // Act

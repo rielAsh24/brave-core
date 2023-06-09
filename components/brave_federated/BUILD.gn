@@ -31,9 +31,9 @@ static_library("brave_federated") {
   ]
 
   public_deps = [
-    "//brave/components/brave_federated/public/interfaces",
     "//brave/components/brave_federated/adapters",
     "//brave/components/brave_federated/data_stores",
+    "//brave/components/brave_federated/public/interfaces",
     "//brave/components/brave_federated/task",
   ]
 

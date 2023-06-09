@@ -8,16 +8,15 @@ import("//testing/test.gni")
 
 static_library("adapters") {
   sources = [
-    "flower_helper.h",
     "flower_helper.cc",
+    "flower_helper.h",
   ]
 
   deps = [
     "//brave/third_party/flower",
     "//third_party/abseil-cpp:absl",
-    "//third_party/protobuf:protobuf_lite"
+    "//third_party/protobuf:protobuf_lite",
   ]
 
   configs += [ "//third_party/eigen3:eigen_includes" ]
-
 }

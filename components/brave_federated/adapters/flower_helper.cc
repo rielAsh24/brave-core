@@ -35,14 +35,14 @@ std::string BuildGetTasksPayload() {
 }
 
 absl::optional<Task> ParseTask(flower::TaskIns task_instruction) {
-  const std::string &id = task_instruction.task_id();
-  const std::string &group_id = task_instruction.group_id();
-  const std::string &workload_id = task_instruction.workload_id();
+  const std::string& id = task_instruction.task_id();
+  const std::string& group_id = task_instruction.group_id();
+  const std::string& workload_id = task_instruction.workload_id();
   if (id.empty() || group_id.empty() || workload_id.empty()) {
     VLOG(2) << "Invalid task id received from FL service";
     return absl::nullopt;
   }
-  const TaskId &task_id = {
+  const TaskId& task_id = {
       .id = id, .group_id = group_id, .family_id = workload_id};
 
   if (!task_instruction.has_task()) {
@@ -94,7 +94,7 @@ absl::optional<Task> ParseTask(flower::TaskIns task_instruction) {
   return Task(task_id, type, "token", parameters, config);
 }
 
-TaskList ParseTaskListFromResponseBody(const std::string &response_body) {
+TaskList ParseTaskListFromResponseBody(const std::string& response_body) {
   flower::PullTaskInsResponse response;
   if (!response.ParseFromString(response_body)) {
     VLOG(1) << "Failed to parse response body";

@@ -18,9 +18,7 @@ static_library("task") {
     "typing.h",
   ]
 
-  public_deps = [
-    "//brave/components/brave_federated/util",
-  ]
+  public_deps = [ "//brave/components/brave_federated/util" ]
 
   deps = [
     "//base",
