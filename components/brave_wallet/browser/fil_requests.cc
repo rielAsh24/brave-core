@@ -10,6 +10,7 @@
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
 #include "base/strings/string_util.h"
+#include "brave/components/brave_wallet/browser/fil_transaction.h"
 #include "brave/components/brave_wallet/browser/json_rpc_requests_helper.h"
 #include "brave/components/brave_wallet/common/fil_address.h"
 #include "brave/components/json/rs/src/lib.rs.h"
@@ -100,12 +101,12 @@ std::string getStateSearchMsgLimited(const std::string& cid, uint64_t period) {
 }
 
 absl::optional<std::string> getSendTransaction(const std::string& signed_tx) {
-  absl::optional<base::Value> parsed_tx = base::JSONReader::Read(signed_tx);
-  if (!parsed_tx || !parsed_tx->is_dict()) {
+  base::Value::List params;
+  auto signed_tx_value = FilTransaction::DeserializeSignedTx(signed_tx);
+  if (!signed_tx_value || !signed_tx_value->is_dict()) {
     return absl::nullopt;
   }
-  base::Value::List params;
-  params.Append(base::Value("{signed_tx}"));
+  params.Append(std::move(signed_tx_value.value()));
 
   // TODO(cdesouza): This dictionary should be composed by GetJsonRpcDictionary.
   base::Value::Dict dict;
@@ -117,9 +118,7 @@ absl::optional<std::string> getSendTransaction(const std::string& signed_tx) {
   auto json = GetJSON(dict);
   // Use substring replace instead of deserializing signed_tx to prevent
   // long to double convertion.
-  base::ReplaceFirstSubstringAfterOffset(&json, 0, "\"{signed_tx}\"",
-                                         signed_tx);
-  return json;
+  return FilTransaction::ConvertSignedTxStringFieldsToInt64("/params/0", json);
 }
 
 }  // namespace fil

@@ -153,7 +153,7 @@ TEST(FilTransactionUnitTest, GetMessageToSignSecp) {
   auto transaction = FilTransaction::FromTxData(mojom::FilTxData::New(
       "", "2", "3", "1", "5", "t1h4n7rphclbmwyjcp6jrdiwlfcuwbroxy3jvg33q",
       "t1h5tg3bhp5r56uzgjae2373znti6ygq4agkx4hzq", "6"));
-  auto message_to_sign = transaction->GetMessageToSign();
+  auto message_to_sign = transaction->GetMessageToSignJson();
   ASSERT_TRUE(message_to_sign);
   CompareJSONs(*message_to_sign,
                R"({
@@ -169,7 +169,7 @@ TEST(FilTransactionUnitTest, GetMessageToSignSecp) {
                  "Version": 0
                })");
   transaction->set_nonce(1);
-  message_to_sign = transaction->GetMessageToSign();
+  message_to_sign = transaction->GetMessageToSignJson();
   ASSERT_TRUE(message_to_sign);
   CompareJSONs(*message_to_sign,
                R"({
@@ -217,7 +217,7 @@ TEST(FilTransactionUnitTest, GetMessageToSignBLS) {
       "ocyug4ftz64xza";
   auto transaction = FilTransaction::FromTxData(mojom::FilTxData::New(
       "1", "2", "3", "1", "5", from_account, to_account, "6"));
-  auto message_to_sign = transaction->GetMessageToSign();
+  auto message_to_sign = transaction->GetMessageToSignJson();
   ASSERT_TRUE(message_to_sign);
   std::string expected_message =
       R"({
