@@ -4,18 +4,21 @@
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
 source_set("interactive_resources") {
-  inputs = [ 
+  inputs = [
     "interactive_resource.h",
     "resources_en.rc",
-    "tray_light.ico"
-  ] 
+    "tray_light.ico",
+  ]
 }
-
 
 source_set("interactive") {
   sources = [
+    "interactive_main.cc",
+    "interactive_main.h",
     "status_icon.cc",
     "status_icon.h",
+    "status_icon_menu_model.cc",
+    "status_icon_menu_model.h",
     "status_icon_observer.h",
     "status_icon_win.cc",
     "status_icon_win.h",
@@ -25,21 +28,17 @@ source_set("interactive") {
     "status_tray_state_changer_win.h",
     "status_tray_win.cc",
     "status_tray_win.h",
-    "status_icon_menu_model.cc",
-    "status_icon_menu_model.h",
-    "interactive_main.cc",
-    "interactive_main.h",
   ]
 
   deps = [
     ":interactive_resources",
     "//base",
+    "//ui/base",
     "//ui/display",
     "//ui/gfx",
     "//ui/gfx/geometry",
-    "//ui/message_center/public/cpp",
-    "//ui/views",
+    "//ui/views"
   ]
 
-  libs = ["Shell32.lib"]
+  libs = [ "Shell32.lib" ]
 }

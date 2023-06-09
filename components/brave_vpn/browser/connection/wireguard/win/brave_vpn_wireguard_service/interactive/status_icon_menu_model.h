@@ -23,10 +23,9 @@ class Image;
 // model state has changed and can tell the status icon to update the menu. This
 // is necessary some platforms which do not notify us before showing the menu
 // (like Ubuntu Unity).
-class StatusIconMenuModel
-    : public ui::SimpleMenuModel,
-      public ui::SimpleMenuModel::Delegate,
-      public base::SupportsWeakPtr<StatusIconMenuModel> {
+class StatusIconMenuModel : public ui::SimpleMenuModel,
+                            public ui::SimpleMenuModel::Delegate,
+                            public base::SupportsWeakPtr<StatusIconMenuModel> {
  public:
   class Delegate {
    public:
@@ -62,8 +61,8 @@ class StatusIconMenuModel
   void SetCommandIdVisible(int command_id, bool visible);
 
   // Sets the accelerator for the specified command id.
-  void SetAcceleratorForCommandId(
-      int command_id, const ui::Accelerator* accelerator);
+  void SetAcceleratorForCommandId(int command_id,
+                                  const ui::Accelerator* accelerator);
 
   // Calling any of these "change" methods will mark the menu item as "dynamic"
   // (see menu_model.h:IsItemDynamicAt) which many platforms take as a cue to

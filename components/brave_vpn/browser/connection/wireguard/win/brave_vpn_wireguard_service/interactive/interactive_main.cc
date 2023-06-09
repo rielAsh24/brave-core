@@ -8,16 +8,16 @@
 #include <wrl/client.h>
 
 #include "base/logging.h"
-#include "base/task/single_thread_task_executor.h"
 #include "base/run_loop.h"
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
+#include "base/task/single_thread_task_executor.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/interactive_resource.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
 #include "ui/base/models/image_model.h"
 #include "ui/base/resource/resource_bundle.h"
-#include "ui/gfx/image/image_family.h"
-#include "ui/gfx/icon_util.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/gfx/icon_util.h"
+#include "ui/gfx/image/image_family.h"
 
 namespace brave_vpn {
 namespace {
@@ -33,8 +33,9 @@ gfx::ImageSkia GetStatusTrayIcon() {
   gfx::Size size(128, 128);
   std::unique_ptr<gfx::ImageFamily> family = GetAppIconImageFamily();
   DCHECK(family);
-  if (!family)
+  if (!family) {
     return gfx::ImageSkia();
+  }
 
   return family->CreateExact(size).AsImageSkia();
 }
@@ -53,12 +54,10 @@ InteractiveMain::~InteractiveMain() = default;
 void InteractiveMain::SetupStatusIcon() {
   status_tray_ = StatusTray::Create();
 
-  status_icon_ = status_tray_->CreateStatusIcon(
-      GetStatusTrayIcon(),
-      u"BraveVpn");
-  
-  std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
+  status_icon_ =
+      status_tray_->CreateStatusIcon(GetStatusTrayIcon(), u"BraveVpn");
 
+  std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
 }
 HRESULT InteractiveMain::Run() {
   base::SingleThreadTaskExecutor service_task_executor(

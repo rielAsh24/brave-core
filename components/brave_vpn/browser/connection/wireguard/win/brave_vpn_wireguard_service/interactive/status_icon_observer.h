@@ -1,9 +1,10 @@
-// Copyright 2012 The Chromium Authors
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+/* Copyright (c) 2023 The Brave Authors. All rights reserved.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#ifndef CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_OBSERVER_H_
-#define CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_OBSERVER_H_
+#ifndef BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_OBSERVER_H_
+#define BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_OBSERVER_H_
 
 #include "build/build_config.h"
 
@@ -29,4 +30,4 @@ class StatusIconObserver {
   virtual ~StatusIconObserver() {}
 };
 
-#endif  // CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_OBSERVER_H_
+#endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_OBSERVER_H_

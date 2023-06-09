@@ -12,10 +12,7 @@
 
 struct StatusIconMenuModel::ItemState {
   ItemState()
-      : checked(false),
-        enabled(true),
-        visible(true),
-        is_dynamic(false) {}
+      : checked(false), enabled(true), visible(true), is_dynamic(false) {}
   bool checked;
   bool enabled;
   bool visible;
@@ -29,11 +26,9 @@ struct StatusIconMenuModel::ItemState {
 // StatusIconMenuModel, public:
 
 StatusIconMenuModel::StatusIconMenuModel(Delegate* delegate)
-    : ui::SimpleMenuModel(this), delegate_(delegate) {
-}
+    : ui::SimpleMenuModel(this), delegate_(delegate) {}
 
-StatusIconMenuModel::~StatusIconMenuModel() {
-}
+StatusIconMenuModel::~StatusIconMenuModel() {}
 
 void StatusIconMenuModel::SetCommandIdChecked(int command_id, bool checked) {
   item_states_[command_id].checked = checked;
@@ -51,7 +46,8 @@ void StatusIconMenuModel::SetCommandIdVisible(int command_id, bool visible) {
 }
 
 void StatusIconMenuModel::SetAcceleratorForCommandId(
-    int command_id, const ui::Accelerator* accelerator) {
+    int command_id,
+    const ui::Accelerator* accelerator) {
   item_states_[command_id].accelerator = *accelerator;
   NotifyMenuStateChanged();
 }
@@ -63,8 +59,8 @@ void StatusIconMenuModel::ChangeLabelForCommandId(int command_id,
   NotifyMenuStateChanged();
 }
 
-void StatusIconMenuModel::ChangeIconForCommandId(
-    int command_id, const gfx::Image& icon) {
+void StatusIconMenuModel::ChangeIconForCommandId(int command_id,
+                                                 const gfx::Image& icon) {
   item_states_[command_id].is_dynamic = true;
   item_states_[command_id].icon = icon;
   NotifyMenuStateChanged();
@@ -80,27 +76,31 @@ void StatusIconMenuModel::RemoveObserver(Observer* observer) {
 
 bool StatusIconMenuModel::IsCommandIdChecked(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end())
+  if (iter != item_states_.end()) {
     return iter->second.checked;
+  }
   return false;
 }
 
 bool StatusIconMenuModel::IsCommandIdEnabled(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end())
+  if (iter != item_states_.end()) {
     return iter->second.enabled;
+  }
   return true;
 }
 
 bool StatusIconMenuModel::IsCommandIdVisible(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end())
+  if (iter != item_states_.end()) {
     return iter->second.visible;
+  }
   return true;
 }
 
 bool StatusIconMenuModel::GetAcceleratorForCommandId(
-    int command_id, ui::Accelerator* accelerator) const {
+    int command_id,
+    ui::Accelerator* accelerator) const {
   auto iter = item_states_.find(command_id);
   if (iter != item_states_.end() &&
       iter->second.accelerator.key_code() != ui::VKEY_UNKNOWN) {
@@ -112,22 +112,25 @@ bool StatusIconMenuModel::GetAcceleratorForCommandId(
 
 bool StatusIconMenuModel::IsItemForCommandIdDynamic(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end())
+  if (iter != item_states_.end()) {
     return iter->second.is_dynamic;
+  }
   return false;
 }
 
 std::u16string StatusIconMenuModel::GetLabelForCommandId(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end())
+  if (iter != item_states_.end()) {
     return iter->second.label;
+  }
   return std::u16string();
 }
 
 ui::ImageModel StatusIconMenuModel::GetIconForCommandId(int command_id) const {
   auto iter = item_states_.find(command_id);
-  if (iter != item_states_.end() && !iter->second.icon.IsEmpty())
+  if (iter != item_states_.end() && !iter->second.icon.IsEmpty()) {
     return ui::ImageModel::FromImage(iter->second.icon);
+  }
   return ui::ImageModel();
 }
 
@@ -139,14 +142,16 @@ void StatusIconMenuModel::MenuItemsChanged() {
 }
 
 void StatusIconMenuModel::NotifyMenuStateChanged() {
-  for (Observer& observer : observer_list_)
+  for (Observer& observer : observer_list_) {
     observer.OnMenuStateChanged();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // StatusIconMenuModel, private:
 
 void StatusIconMenuModel::ExecuteCommand(int command_id, int event_flags) {
-  if (delegate_)
+  if (delegate_) {
     delegate_->ExecuteCommand(command_id, event_flags);
+  }
 }

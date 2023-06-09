@@ -3,15 +3,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#ifndef CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_H_
-#define CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_H_
+#ifndef BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_H_
+#define BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_H_
 
 #include <memory>
 #include <string>
 
 #include "base/observer_list.h"
-#include "build/build_config.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_menu_model.h"
+#include "build/build_config.h"
 
 namespace gfx {
 class ImageSkia;
@@ -57,9 +57,6 @@ class StatusIcon {
 
   // Dispatches a click event to the observers.
   void DispatchClickEvent();
-#if BUILDFLAG(IS_WIN)
-  void DispatchBalloonClickEvent();
-#endif
 
   // Attempts to make the status icon directly visible on system UI.  Currently
   // this only applies to Windows, where status icons are hidden by default
@@ -81,4 +78,4 @@ class StatusIcon {
   std::unique_ptr<StatusIconMenuModel> context_menu_contents_;
 };
 
-#endif  // CHROME_BROWSER_STATUS_ICONS_STATUS_ICON_H_
+#endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_H_

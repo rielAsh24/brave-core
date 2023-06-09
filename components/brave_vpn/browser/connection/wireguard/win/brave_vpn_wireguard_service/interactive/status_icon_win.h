@@ -71,6 +71,9 @@ class StatusIconWin : public StatusIcon {
   // The message identifier used for status icon messages.
   UINT message_id_;
 
+  // The currently-displayed icon for the window.
+  base::win::ScopedHICON icon_;
+
   // Not owned.
   raw_ptr<ui::MenuModel> menu_model_ = nullptr;
 

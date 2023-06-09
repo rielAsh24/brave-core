@@ -10,9 +10,9 @@
 
 #include <utility>
 
+#include "base/files/file_path.h"
 #include "base/functional/bind.h"
 #include "base/location.h"
-#include "base/files/file_path.h"
 #include "base/sequence_checker.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/threading/thread.h"
@@ -20,9 +20,9 @@
 #include "base/win/wrapped_window_proc.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive//status_tray_state_changer_win.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_win.h"
-#include "ui/gfx/geometry/point_conversions.h"
 #include "ui/display/win/screen_win.h"
 #include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/win/hwnd_util.h"
 
 static const UINT kStatusIconMessage = WM_APP + 1;
@@ -35,13 +35,12 @@ const base::FilePath::CharType kStatusTrayWindowClass[] =
 
 const base::FilePath::CharType kBraveVpnTaskbarMessageName[] =
     FILE_PATH_LITERAL("BraveVpnTaskbarCreated");
-    
-    
+
 gfx::Point GetCursorScreenPoint() {
   POINT pt;
   ::GetCursorPos(&pt);
-  return gfx::ToFlooredPoint(display::win::ScreenWin::ScreenToDIPPoint(
-    gfx::PointF(gfx::Point(pt))));
+  return gfx::ToFlooredPoint(
+      display::win::ScreenWin::ScreenToDIPPoint(gfx::PointF(gfx::Point(pt))));
 }
 
 }  // namespace
@@ -203,10 +202,6 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
     }
     LOG(ERROR) << "icon:" << win_icon;
     switch (lparam) {
-      case TB_INDETERMINATE:
-        win_icon->HandleBalloonClickEvent();
-        return TRUE;
-
       case WM_LBUTTONDOWN:
       case WM_RBUTTONDOWN:
       case WM_CONTEXTMENU:
@@ -221,7 +216,7 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
     // If Chrome is in background-only mode, this is the only notification
     // it gets that Windows is exiting. Make sure we shutdown in an orderly
     // fashion.
-    //chrome::SessionEnding();
+    // chrome::SessionEnding();
   }
   return ::DefWindowProc(hwnd, message, wparam, lparam);
 }
