@@ -65,6 +65,7 @@ void InteractiveMain::SetupStatusIcon() {
 
   std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
   menu->AddItem(1000, u"Turn On Brave Vpn");
+  menu->AddItem(1001, u"Exit");
   status_icon_->SetContextMenu(std::move(menu));
 }
 HRESULT InteractiveMain::Run() {

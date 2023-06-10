@@ -173,6 +173,16 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
                                         UINT message,
                                         WPARAM wparam,
                                         LPARAM lparam) {
+  int command_id = LOWORD(wparam);
+  int event_flags = HIWORD(wparam);
+  if (message == WM_COMMAND) {
+    LOG(ERROR) << "WM_COMMAND:" << message << ", command_id:" << command_id << " - " << event_flags << " - wparam:" << wparam << ", lparam:" << lparam;
+  }
+  if (message == WM_MENUCOMMAND) {    
+    LOG(ERROR) << "WM_MENUCOMMAND:" << command_id << " - " << event_flags << " - wparam:" << wparam
+    << " -> lparam lo:" << LOWORD(lparam) << ", lparam hi:" << HIWORD(lparam);
+  }
+  
   if (message == taskbar_created_message_) {
     // We need to reset all of our icons because the taskbar went away.
     for (StatusIcons::const_iterator i(status_icons().begin());
@@ -200,14 +210,12 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
     if (!win_icon) {
       return TRUE;
     }
-    LOG(ERROR) << "icon:" << win_icon;
     switch (lparam) {
       case WM_LBUTTONDOWN:
       case WM_RBUTTONDOWN:
       case WM_CONTEXTMENU:
         // Walk our icons, find which one was clicked on, and invoke its
         // HandleClickEvent() method.
-        LOG(ERROR) << "Screen:" << display::Screen::GetScreen();
         gfx::Point cursor_pos(GetCursorScreenPoint());
         win_icon->HandleClickEvent(cursor_pos, lparam == WM_LBUTTONDOWN);
         return TRUE;

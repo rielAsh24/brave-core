@@ -63,13 +63,12 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
   if (!SetForegroundWindow(window_)) {
     return;
   }
-
-
-  menu_runner_ = std::make_unique<views::MenuRunner>(
-      menu_model_, views::MenuRunner::HAS_MNEMONICS);
-  menu_runner_->RunMenuAt(nullptr, nullptr, gfx::Rect(cursor_pos, gfx::Size()),
-                          views::MenuAnchorPosition::kTopLeft,
-                          ui::MENU_SOURCE_MOUSE);
+  
+  system_menu_ = std::make_unique<views::NativeMenuWin>(
+        menu_model_, nullptr);
+  system_menu_->Rebuild(nullptr);
+  
+  TrackPopupMenu(system_menu_->menu_, TPM_BOTTOMALIGN, cursor_pos.x(), cursor_pos.y(), 0, window_, NULL);
 }
 
 void StatusIconWin::ResetIcon() {
@@ -128,7 +127,6 @@ void StatusIconWin::ForceVisible() {
 void StatusIconWin::UpdatePlatformContextMenu(StatusIconMenuModel* menu) {
   // |menu_model_| is about to be destroyed. Destroy the menu (which closes it)
   // so that it doesn't attempt to continue using |menu_model_|.
-  menu_runner_.reset();
   DCHECK(menu);
   menu_model_ = menu;
 }

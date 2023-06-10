@@ -15,6 +15,7 @@
 #include "base/win/scoped_gdi_object.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
 #include "ui/views/layout/layout_provider.h"
+#include "ui/views/controls/menu/native_menu_win.h"
 
 namespace gfx {
 class Point;
@@ -79,7 +80,7 @@ class StatusIconWin : public StatusIcon {
   raw_ptr<ui::MenuModel> menu_model_ = nullptr;
 
   // Context menu associated with this icon (if any).
-  std::unique_ptr<views::MenuRunner> menu_runner_;
+  std::unique_ptr<views::NativeMenuWin> system_menu_;
 };
 
 #endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_WIN_H_
