@@ -18,8 +18,6 @@
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/icon_util.h"
 #include "ui/gfx/image/image_family.h"
-#include "ui/base/resource/resource_bundle.h"
-
 
 namespace brave_vpn {
 namespace {

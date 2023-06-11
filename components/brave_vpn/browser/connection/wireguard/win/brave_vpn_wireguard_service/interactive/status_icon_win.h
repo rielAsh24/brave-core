@@ -14,8 +14,8 @@
 #include "base/memory/raw_ptr.h"
 #include "base/win/scoped_gdi_object.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
-#include "ui/views/layout/layout_provider.h"
 #include "ui/views/controls/menu/native_menu_win.h"
+#include "ui/views/layout/layout_provider.h"
 
 namespace gfx {
 class Point;

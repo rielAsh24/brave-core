@@ -176,13 +176,16 @@ LRESULT CALLBACK StatusTrayWin::WndProc(HWND hwnd,
   int command_id = LOWORD(wparam);
   int event_flags = HIWORD(wparam);
   if (message == WM_COMMAND) {
-    LOG(ERROR) << "WM_COMMAND:" << message << ", command_id:" << command_id << " - " << event_flags << " - wparam:" << wparam << ", lparam:" << lparam;
+    LOG(ERROR) << "WM_COMMAND:" << message << ", command_id:" << command_id
+               << " - " << event_flags << " - wparam:" << wparam
+               << ", lparam:" << lparam;
   }
-  if (message == WM_MENUCOMMAND) {    
-    LOG(ERROR) << "WM_MENUCOMMAND:" << command_id << " - " << event_flags << " - wparam:" << wparam
-    << " -> lparam lo:" << LOWORD(lparam) << ", lparam hi:" << HIWORD(lparam);
+  if (message == WM_MENUCOMMAND) {
+    LOG(ERROR) << "WM_MENUCOMMAND:" << command_id << " - " << event_flags
+               << " - wparam:" << wparam << " -> lparam lo:" << LOWORD(lparam)
+               << ", lparam hi:" << HIWORD(lparam);
   }
-  
+
   if (message == taskbar_created_message_) {
     // We need to reset all of our icons because the taskbar went away.
     for (StatusIcons::const_iterator i(status_icons().begin());

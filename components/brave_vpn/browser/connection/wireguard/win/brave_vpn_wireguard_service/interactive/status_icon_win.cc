@@ -16,8 +16,34 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/icon_util.h"
 #include "ui/gfx/image/image_skia.h"
+#include "ui/views/controls/menu/menu_insertion_delegate_win.h"
 #include "ui/views/controls/menu/menu_runner.h"
 
+namespace {
+
+class BraveMenuInsertionDelegateWin : public views::MenuInsertionDelegateWin {
+ public:
+  BraveMenuInsertionDelegateWin() {}
+
+  BraveMenuInsertionDelegateWin(const BraveMenuInsertionDelegateWin&) = delete;
+  BraveMenuInsertionDelegateWin& operator=(
+      const BraveMenuInsertionDelegateWin&) = delete;
+
+  ~BraveMenuInsertionDelegateWin() override {}
+
+  // Overridden from views::MenuInsertionDelegateWin:
+  size_t GetInsertionIndex(HMENU native_menu) override {
+    native_menu_ = native_menu;
+    return static_cast<size_t>(std::max(1, GetMenuItemCount(native_menu)) - 1);
+  }
+
+  HMENU GetNativeMenu() { return native_menu_; }
+
+ private:
+  HMENU native_menu_ = nullptr;
+};
+
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 // StatusIconWin, public:
@@ -63,12 +89,13 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
   if (!SetForegroundWindow(window_)) {
     return;
   }
-  
-  system_menu_ = std::make_unique<views::NativeMenuWin>(
-        menu_model_, nullptr);
-  system_menu_->Rebuild(nullptr);
-  
-  TrackPopupMenu(system_menu_->menu_, TPM_BOTTOMALIGN, cursor_pos.x(), cursor_pos.y(), 0, window_, NULL);
+
+  system_menu_ = std::make_unique<views::NativeMenuWin>(menu_model_, nullptr);
+  BraveMenuInsertionDelegateWin menu_delegate;
+  system_menu_->Rebuild(&menu_delegate);
+
+  TrackPopupMenu(menu_delegate.GetNativeMenu(), TPM_BOTTOMALIGN, cursor_pos.x(),
+                 cursor_pos.y(), 0, window_, NULL);
 }
 
 void StatusIconWin::ResetIcon() {
