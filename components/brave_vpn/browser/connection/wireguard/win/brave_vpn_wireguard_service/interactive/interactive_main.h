@@ -12,8 +12,8 @@
 
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_menu_model.h"
 
-class StatusIcon;
-class StatusTray;
+class StatusIconWin;
+class StatusTrayWin;
 
 namespace brave_vpn {
 
@@ -37,9 +37,9 @@ class InteractiveMain : public StatusIconMenuModel::Delegate {
   InteractiveMain();
   ~InteractiveMain() override;
 
-  std::unique_ptr<StatusTray> status_tray_;
+  std::unique_ptr<StatusTrayWin> status_tray_;
   // Reference to our status icon (if any) - owned by the StatusTray.
-  raw_ptr<StatusIcon, DanglingUntriaged> status_icon_ = nullptr;
+  raw_ptr<StatusIconWin, DanglingUntriaged> status_icon_ = nullptr;
 
   base::OnceClosure quit_;
 };

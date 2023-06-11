@@ -7,17 +7,10 @@ source_set("interactive") {
   sources = [
     "interactive_main.cc",
     "interactive_main.h",
-    "status_icon.cc",
-    "status_icon.h",
     "status_icon_menu_model.cc",
     "status_icon_menu_model.h",
-    "status_icon_observer.h",
     "status_icon_win.cc",
     "status_icon_win.h",
-    "status_tray.cc",
-    "status_tray.h",
-    "status_tray_state_changer_win.cc",
-    "status_tray_state_changer_win.h",
     "status_tray_win.cc",
     "status_tray_win.h",
   ]

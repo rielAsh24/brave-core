@@ -13,7 +13,6 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/win/scoped_gdi_object.h"
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
 #include "ui/views/controls/menu/native_menu_win.h"
 #include "ui/views/layout/layout_provider.h"
 
@@ -21,13 +20,10 @@ namespace gfx {
 class Point;
 }
 
-namespace views {
-class MenuRunner;
-}
-
 class StatusTrayWin;
+class StatusIconMenuModel;
 
-class StatusIconWin : public StatusIcon {
+class StatusIconWin {
  public:
   // Constructor which provides this icon's unique ID and messaging window.
   StatusIconWin(StatusTrayWin* tray, UINT id, HWND window, UINT message);
@@ -35,7 +31,7 @@ class StatusIconWin : public StatusIcon {
   StatusIconWin(const StatusIconWin&) = delete;
   StatusIconWin& operator=(const StatusIconWin&) = delete;
 
-  ~StatusIconWin() override;
+  ~StatusIconWin();
 
   // Handles a click event from the user - if |left_button_click| is true and
   // there is a registered observer, passes the click event to the observer,
@@ -49,14 +45,10 @@ class StatusIconWin : public StatusIcon {
   HWND window() const { return window_; }
   UINT message_id() const { return message_id_; }
 
-  // Overridden from StatusIcon:
-  void SetImage(const gfx::ImageSkia& image) override;
-  void SetToolTip(const std::u16string& tool_tip) override;
-  void ForceVisible() override;
-
- protected:
-  // Overridden from StatusIcon:
-  void UpdatePlatformContextMenu(StatusIconMenuModel* menu) override;
+  void SetImage(const gfx::ImageSkia& image);
+  void SetToolTip(const std::u16string& tool_tip);
+  void SetContextMenu(std::unique_ptr<StatusIconMenuModel> menu);
+  void OnMenuCommand(int index, int event_flags);
 
  private:
   void InitIconData(NOTIFYICONDATA* icon_data);
@@ -76,11 +68,11 @@ class StatusIconWin : public StatusIcon {
   // The currently-displayed icon for the window.
   base::win::ScopedHICON icon_;
 
-  // Not owned.
-  raw_ptr<ui::MenuModel> menu_model_ = nullptr;
+  // Context menu, if any.
+  std::unique_ptr<StatusIconMenuModel> menu_model_;
 
   // Context menu associated with this icon (if any).
-  std::unique_ptr<views::NativeMenuWin> system_menu_;
+  std::unique_ptr<views::NativeMenuWin> native_menu_;
 };
 
 #endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_ICON_WIN_H_

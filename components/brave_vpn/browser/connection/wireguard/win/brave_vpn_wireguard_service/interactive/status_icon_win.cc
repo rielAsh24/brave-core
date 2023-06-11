@@ -11,6 +11,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray_win.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon_menu_model.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
@@ -74,12 +75,6 @@ StatusIconWin::~StatusIconWin() {
 
 void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
                                      bool left_mouse_click) {
-  // Pass to the observer if appropriate.
-  if (left_mouse_click && HasObservers()) {
-    DispatchClickEvent();
-    return;
-  }
-
   if (!menu_model_) {
     return;
   }
@@ -90,12 +85,20 @@ void StatusIconWin::HandleClickEvent(const gfx::Point& cursor_pos,
     return;
   }
 
-  system_menu_ = std::make_unique<views::NativeMenuWin>(menu_model_, nullptr);
+  native_menu_ = std::make_unique<views::NativeMenuWin>(menu_model_.get(), nullptr);
   BraveMenuInsertionDelegateWin menu_delegate;
-  system_menu_->Rebuild(&menu_delegate);
+  native_menu_->Rebuild(&menu_delegate);
 
   TrackPopupMenu(menu_delegate.GetNativeMenu(), TPM_BOTTOMALIGN, cursor_pos.x(),
                  cursor_pos.y(), 0, window_, NULL);
+}
+
+void StatusIconWin::OnMenuCommand(int index, int event_flags) {
+  DCHECK(menu_model_.get());
+  if (!menu_model_->delegate())
+    return;
+  menu_model_->delegate()->ExecuteCommand(
+      menu_model_->GetCommandIdAt(index), event_flags);
 }
 
 void StatusIconWin::ResetIcon() {
@@ -144,18 +147,8 @@ void StatusIconWin::SetToolTip(const std::u16string& tool_tip) {
   }
 }
 
-void StatusIconWin::ForceVisible() {
-  tray_->UpdateIconVisibilityInBackground(this);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// StatusIconWin, private:
-
-void StatusIconWin::UpdatePlatformContextMenu(StatusIconMenuModel* menu) {
-  // |menu_model_| is about to be destroyed. Destroy the menu (which closes it)
-  // so that it doesn't attempt to continue using |menu_model_|.
-  DCHECK(menu);
-  menu_model_ = menu;
+void StatusIconWin::SetContextMenu(std::unique_ptr<StatusIconMenuModel> menu) {
+  menu_model_ = std::move(menu);
 }
 
 void StatusIconWin::InitIconData(NOTIFYICONDATA* icon_data) {

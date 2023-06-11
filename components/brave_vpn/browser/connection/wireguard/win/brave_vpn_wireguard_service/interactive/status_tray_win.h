@@ -9,63 +9,36 @@
 #include <windows.h>
 
 #include <memory>
+#include <string>
 
-#include "base/gtest_prod_util.h"
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
+#include "ui/gfx/image/image_skia.h"
 
 class StatusIconWin;
 
-// A class that's responsible for increasing, if possible, the visibility
-// of a status tray icon on the taskbar. The default implementation sends
-// a task to a worker thread each time EnqueueChange is called.
-class StatusTrayStateChangerProxy {
- public:
-  virtual ~StatusTrayStateChangerProxy() {}
-
-  // Called by StatusTrayWin to request upgraded visibility on the icon
-  // represented by the |icon_id|, |window| pair.
-  virtual void EnqueueChange(UINT icon_id, HWND window) = 0;
-};
-
-class StatusTrayWin : public StatusTray {
+class StatusTrayWin {
  public:
   StatusTrayWin();
 
   StatusTrayWin(const StatusTrayWin&) = delete;
   StatusTrayWin& operator=(const StatusTrayWin&) = delete;
 
-  ~StatusTrayWin() override;
+  ~StatusTrayWin();
 
-  void UpdateIconVisibilityInBackground(StatusIconWin* status_icon);
-
-  // Exposed for testing.
-  LRESULT CALLBACK WndProc(HWND hwnd,
-                           UINT message,
-                           WPARAM wparam,
-                           LPARAM lparam);
-
- protected:
-  // Overriden from StatusTray:
-  std::unique_ptr<StatusIcon> CreatePlatformStatusIcon(
+  StatusIconWin* CreateStatusIcon(
       const gfx::ImageSkia& image,
-      const std::u16string& tool_tip) override;
+      const std::u16string& tool_tip);
 
  private:
-  FRIEND_TEST_ALL_PREFIXES(StatusTrayWinTest, EnsureVisibleTest);
-
   // Static callback invoked when a message comes in to our messaging window.
   static LRESULT CALLBACK WndProcStatic(HWND hwnd,
                                         UINT message,
                                         WPARAM wparam,
                                         LPARAM lparam);
+  LRESULT CALLBACK WndProc(HWND hwnd,
+                           UINT message,
+                           WPARAM wparam,
+                           LPARAM lparam);
 
-  UINT NextIconId();
-
-  void SetStatusTrayStateChangerProxyForTest(
-      std::unique_ptr<StatusTrayStateChangerProxy> proxy);
-
-  // The unique icon ID we will assign to the next icon.
-  UINT next_icon_id_;
 
   // The window class of |window_|.
   ATOM atom_;
@@ -82,7 +55,7 @@ class StatusTrayWin : public StatusTray {
 
   // Manages changes performed on a background thread to manipulate visibility
   // of notification icons.
-  std::unique_ptr<StatusTrayStateChangerProxy> state_changer_proxy_;
+  std::unique_ptr<StatusIconWin> status_icon_;
 };
 
 #endif  // BRAVE_COMPONENTS_BRAVE_VPN_BROWSER_CONNECTION_WIREGUARD_WIN_BRAVE_VPN_WIREGUARD_SERVICE_INTERACTIVE_STATUS_TRAY_WIN_H_
