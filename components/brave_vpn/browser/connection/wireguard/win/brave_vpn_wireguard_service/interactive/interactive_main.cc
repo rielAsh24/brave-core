@@ -10,7 +10,8 @@
 #include "base/logging.h"
 #include "base/run_loop.h"
 #include "base/task/single_thread_task_executor.h"
-#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/interactive_resource.h"
+#include "ui/base/models/image_model.h"
+#include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/resources/resource.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_icon.h"
 #include "brave/components/brave_vpn/browser/connection/wireguard/win/brave_vpn_wireguard_service/interactive/status_tray.h"
 #include "ui/base/models/image_model.h"
@@ -21,17 +22,15 @@
 
 namespace brave_vpn {
 namespace {
-std::unique_ptr<gfx::ImageFamily> GetAppIconImageFamily() {
-  const int icon_id = IDR_MAINFRAME;
+std::unique_ptr<gfx::ImageFamily> GetAppIconImageFamily(int icon_id) {
   // Get the icon from the current module.
   HMODULE module = GetModuleHandle(nullptr);
   DCHECK(module);
   return IconUtil::CreateImageFamilyFromIconResource(module, icon_id);
 }
 
-gfx::ImageSkia GetStatusTrayIcon() {
-  gfx::Size size(128, 128);
-  std::unique_ptr<gfx::ImageFamily> family = GetAppIconImageFamily();
+gfx::ImageSkia GetIconFromResources(int icon_id, gfx::Size size) {
+  std::unique_ptr<gfx::ImageFamily> family = GetAppIconImageFamily(icon_id);
   DCHECK(family);
   if (!family) {
     return gfx::ImageSkia();
@@ -59,10 +58,11 @@ void InteractiveMain::SetupStatusIcon() {
   status_tray_ = StatusTray::Create();
 
   status_icon_ =
-      status_tray_->CreateStatusIcon(GetStatusTrayIcon(), u"BraveVpn");
+      status_tray_->CreateStatusIcon(GetIconFromResources(IDR_BRAVE_VPN_TRAY_DARK, {64, 64}), u"BraveVpn");
 
   std::unique_ptr<StatusIconMenuModel> menu(new StatusIconMenuModel(this));
   menu->AddItem(1000, u"Turn On Brave Vpn");
+  //ui::ImageModel::FromImageSkia(GetIconFromResources(IDR_BRAVE_VPN_TOGGLER_ON, {64, 64})));
   menu->AddItem(1001, u"Exit");
   status_icon_->SetContextMenu(std::move(menu));
 }

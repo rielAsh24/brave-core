@@ -1,3 +1,0 @@
-#include "interactive_resource.h"
-
-IDR_MAINFRAME       ICON                        "interactive\\tray_dark.ico"

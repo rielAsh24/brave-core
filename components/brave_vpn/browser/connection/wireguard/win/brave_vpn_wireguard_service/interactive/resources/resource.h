@@ -5,6 +5,8 @@
 
 // clang-format off
 
-#define IDR_MAINFRAME 101
+#define IDR_BRAVE_VPN_TRAY_DARK         101
+#define IDR_BRAVE_VPN_TRAY_LIGHT        102
+#define IDR_BRAVE_VPN_TOGGLER_ON        103
 
 // clang-format on
