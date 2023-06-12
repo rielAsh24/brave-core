@@ -34,7 +34,6 @@ import { AllNetworksOption } from '../../../../options/network-filter-options'
 import { NftScreen } from '../../../../nft/components/nft-details/nft-screen'
 
 // Hooks
-import { usePricing } from '../../../../common/hooks'
 import {
   useSafePageSelector,
   useUnsafePageSelector,
@@ -47,9 +46,6 @@ import {
 
 // Styled Components
 import { Skeleton } from '../../../shared/loading-skeleton/styles'
-import { TokenDetailsModal } from './components/token-details-modal/token-details-modal'
-import { WalletActions } from '../../../../common/actions'
-import { HideTokenModal } from './components/hide-token-modal/hide-token-modal'
 import {
   WalletPageWrapper
 } from '../../wallet-page-wrapper/wallet-page-wrapper'
@@ -57,10 +53,6 @@ import NftAssetHeader from '../../card-headers/nft-asset-header'
 import { StyledWrapper } from './style'
 
 export const PortfolioNftAsset = () => {
-  // state
-  const [showTokenDetailsModal, setShowTokenDetailsModal] = React.useState<boolean>(false)
-  const [showHideTokenModel, setShowHideTokenModal] = React.useState<boolean>(false)
-
   // routing
   const history = useHistory()
   const { contractAddress, tokenId } = useParams<{ contractAddress: string, tokenId?: string }>()
@@ -68,10 +60,8 @@ export const PortfolioNftAsset = () => {
   // redux
   const dispatch = useDispatch()
 
-  const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
   const userVisibleTokensInfo = useUnsafeWalletSelector(WalletSelectors.userVisibleTokensInfo)
   const accounts = useUnsafeWalletSelector(WalletSelectors.accounts)
-  const transactionSpotPrices = useUnsafeWalletSelector(WalletSelectors.transactionSpotPrices)
   const selectedNetworkFilter = useUnsafeWalletSelector(WalletSelectors.selectedNetworkFilter)
 
   const selectedAsset = useUnsafePageSelector(PageSelectors.selectedAsset)
@@ -140,9 +130,6 @@ export const PortfolioNftAsset = () => {
     fullAssetBalance
   ])
 
-  // more custom hooks
-  const { computeFiatAmount } = usePricing(transactionSpotPrices)
-
   // memos / computed
   const selectedAssetFromParams = React.useMemo(() => {
     const userToken = userVisibleTokensInfo.find((token) =>
@@ -167,26 +154,6 @@ export const PortfolioNftAsset = () => {
     )
   }, [userAssetList, selectedAsset])
 
-  const fullAssetFiatBalance = React.useMemo(() => fullAssetBalances?.assetBalance
-    ? computeFiatAmount(
-      fullAssetBalances.assetBalance,
-      fullAssetBalances.asset.symbol,
-      fullAssetBalances.asset.decimals,
-      fullAssetBalances.asset.contractAddress,
-      fullAssetBalances.asset.chainId
-    )
-    : Amount.empty(),
-    [fullAssetBalances]
-  )
-
-  const formattedAssetBalance = React.useMemo(() => {
-    if (!fullAssetBalances?.assetBalance) return ''
-
-    return new Amount(fullAssetBalances.assetBalance)
-      .divideByDecimals(selectedAsset?.decimals ?? 18)
-      .formatAsAsset(8)
-  }, [fullAssetBalances, selectedAsset])
-
   const goBack = React.useCallback(() => {
     dispatch(WalletPageActions.selectAsset({ asset: undefined, timeFrame: selectedTimeline }))
     dispatch(WalletPageActions.updateNFTMetadata(undefined))
@@ -196,23 +163,6 @@ export const PortfolioNftAsset = () => {
     userAssetList,
     selectedTimeline
   ])
-
-  const onCloseTokenDetailsModal = React.useCallback(() => setShowTokenDetailsModal(false), [])
-
-  const onCloseHideTokenModal = React.useCallback(() => setShowHideTokenModal(false), [])
-
-  const onHideAsset = React.useCallback(() => {
-    if (!selectedAsset) return
-    dispatch(WalletActions.setUserAssetVisible({ token: selectedAsset, isVisible: false }))
-    dispatch(WalletActions.refreshBalancesAndPriceHistory())
-    dispatch(WalletPageActions.selectAsset({
-      asset: undefined,
-      timeFrame: BraveWallet.AssetPriceTimeframe.OneDay
-    }))
-    if (showHideTokenModel) setShowHideTokenModal(false)
-    if (showTokenDetailsModal) setShowTokenDetailsModal(false)
-    history.push(WalletRoutes.PortfolioAssets)
-  }, [selectedAsset, showTokenDetailsModal])
 
   const onSend = React.useCallback(() => {
     if (!selectedAsset || !selectedAssetsNetwork) return
@@ -266,34 +216,6 @@ export const PortfolioNftAsset = () => {
       }
     >
       <StyledWrapper>
-        {showTokenDetailsModal &&
-          selectedAsset &&
-          selectedAssetsNetwork &&
-          <TokenDetailsModal
-            onClose={onCloseTokenDetailsModal}
-            selectedAsset={selectedAsset}
-            selectedAssetNetwork={selectedAssetsNetwork}
-            assetBalance={formattedAssetBalance}
-            formattedFiatBalance={
-              fullAssetFiatBalance.formatAsFiat(defaultCurrencies.fiat)
-            }
-            onShowHideTokenModal={
-              () => setShowHideTokenModal(true)
-            }
-          />
-        }
-
-        {showHideTokenModel &&
-          selectedAsset &&
-          selectedAssetsNetwork &&
-          <HideTokenModal
-            selectedAsset={selectedAsset}
-            selectedAssetNetwork={selectedAssetsNetwork}
-            onClose={onCloseHideTokenModal}
-            onHideAsset={onHideAsset}
-          />
-        }
-
         {selectedAsset &&
           <NftScreen
             selectedAsset={selectedAsset}
