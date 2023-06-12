@@ -787,8 +787,11 @@ export enum WalletRoutes {
   Portfolio = '/crypto/portfolio',
   PortfolioAssets = '/crypto/portfolio/assets',
   PortfolioNFTs = '/crypto/portfolio/nfts',
-  PortfolioAsset = '/crypto/portfolio/' +
-  ':assetsOrNfts/' +
+  PortfolioNFTAsset = '/crypto/portfolio/nfts/' +
+  ':chainIdOrMarketSymbol/' +
+  ':contractAddress/' +
+  ':tokenId?',
+  PortfolioAsset = '/crypto/portfolio/assets/' +
   ':chainIdOrMarketSymbol/' +
   ':contractOrSymbol?/' +
   ':tokenId?',
