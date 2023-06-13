@@ -6,6 +6,8 @@
 #ifndef BRAVE_BROWSER_UI_VIEWS_SIDE_PANEL_BRAVE_SIDE_PANEL_H_
 #define BRAVE_BROWSER_UI_VIEWS_SIDE_PANEL_BRAVE_SIDE_PANEL_H_
 
+#include <memory>
+
 #include "ui/base/metadata/metadata_header_macros.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/views/controls/resize_area_delegate.h"
@@ -45,6 +47,8 @@ class BraveSidePanel : public views::View,
   void OnResize(int resize_amount, bool done_resizing) override;
 
   void SetMinimumSidePanelContentsWidthForTesting(int width) {}
+
+  void AddHeaderView(std::unique_ptr<views::View> view);
 
  private:
   void UpdateVisibility();

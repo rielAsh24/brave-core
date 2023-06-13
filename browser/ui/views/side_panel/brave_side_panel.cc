@@ -86,5 +86,9 @@ void BraveSidePanel::OnResize(int resize_amount, bool done_resizing) {
   // Do Nothing.
 }
 
+void BraveSidePanel::AddHeaderView(std::unique_ptr<views::View> view) {
+  // Do nothing.
+}
+
 BEGIN_METADATA(BraveSidePanel, views::View)
 END_METADATA
