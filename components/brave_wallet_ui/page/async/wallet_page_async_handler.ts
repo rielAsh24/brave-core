@@ -45,13 +45,7 @@ async function refreshWalletInfo(store: Store) {
   const proxy = getWalletPageApiProxy()
   const { walletInfo } = await proxy.walletHandler.getWalletInfo()
   const { allAccounts } = await proxy.keyringService.getAllAccounts()
-  store.dispatch(
-    WalletActions.initialized({
-      ...walletInfo,
-      accountInfos: allAccounts.accounts,
-      selectedAccount: ''
-    })
-  )
+  store.dispatch(WalletActions.initialized({ walletInfo, allAccounts }))
   store.dispatch(WalletActions.refreshAll({}))
 }
 
@@ -173,7 +167,7 @@ handler.on(WalletPageActions.selectAsset.type, async (store: Store, payload: Upd
 handler.on(WalletPageActions.importAccount.type, async (store: Store, payload: ImportAccountPayloadType) => {
   const keyringService = getWalletPageApiProxy().keyringService
   const result = await keyringService.importAccount(payload.accountName, payload.privateKey, payload.coin)
-  if (result.success) {
+  if (result.account) {
     store.dispatch(WalletPageActions.setImportAccountError(false))
     store.dispatch(WalletPageActions.setShowAddModal(false))
   } else {
@@ -185,7 +179,7 @@ handler.on(WalletPageActions.importFilecoinAccount.type, async (store: Store, pa
   const { keyringService } = getWalletPageApiProxy()
   const result = await keyringService.importFilecoinAccount(payload.accountName, payload.privateKey, payload.network)
 
-  if (result.success) {
+  if (result.account) {
     store.dispatch(WalletPageActions.setImportAccountError(false))
     store.dispatch(WalletPageActions.setShowAddModal(false))
   } else {
@@ -196,7 +190,7 @@ handler.on(WalletPageActions.importFilecoinAccount.type, async (store: Store, pa
 handler.on(WalletPageActions.importAccountFromJson.type, async (store: Store, payload: ImportAccountFromJsonPayloadType) => {
   const keyringService = getWalletPageApiProxy().keyringService
   const result = await keyringService.importAccountFromJson(payload.accountName, payload.password, payload.json)
-  if (result.success) {
+  if (result.account) {
     store.dispatch(WalletPageActions.setImportAccountError(false))
     store.dispatch(WalletPageActions.setShowAddModal(false))
   } else {

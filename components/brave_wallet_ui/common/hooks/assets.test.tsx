@@ -55,15 +55,17 @@ describe('useAssets hook', () => {
     const { result, waitForNextUpdate } = renderHook(
       () => useAssets(),
       renderHookOptionsWithCustomStore(
-        createMockStore({
-          walletStateOverride: {
-            ...mockWalletState,
-            userVisibleTokensInfo: mockVisibleList,
-            selectedAccount: mockAccounts[0],
-            accounts: mockAccounts,
-            transactionSpotPrices: mockAssetPrices
-          }
-        })
+        createMockStore(
+          {
+            walletStateOverride: {
+              ...mockWalletState,
+              userVisibleTokensInfo: mockVisibleList,
+              accounts: mockAccounts,
+              transactionSpotPrices: mockAssetPrices
+            }
+          },
+          { selectedAccountId: mockAccounts[0].accountId }
+        )
       )
     )
 
@@ -80,11 +82,12 @@ describe('useAssets hook', () => {
           walletStateOverride: {
             ...mockWalletState,
             userVisibleTokensInfo: [],
-            selectedAccount: mockAccounts[0],
             accounts: mockAccounts,
             transactionSpotPrices: mockAssetPrices
           }
-        })
+        },
+        { selectedAccountId: mockAccounts[0].accountId }
+        )
       )
     )
     expect(result.current.panelUserAssetList).toEqual([])

@@ -5,16 +5,12 @@
 
 import * as React from 'react'
 import { useParams } from 'react-router'
-import { useDispatch } from 'react-redux'
 
 // Messages
 import { ENSOffchainLookupMessage, FailedChecksumMessage } from '../send-ui-messages'
 
 // Types
 import { SendOptionTypes, AddressMessageInfo } from '../../../../constants/types'
-
-// Actions
-import { WalletActions } from '../../../../common/actions'
 
 // Selectors
 import { WalletSelectors } from '../../../../common/selectors'
@@ -29,11 +25,16 @@ import Amount from '../../../../utils/amount'
 import { getBalance, formatTokenBalanceWithSymbol } from '../../../../utils/balance-utils'
 import { computeFiatAmount } from '../../../../utils/pricing-utils'
 import { endsWithAny } from '../../../../utils/string-utils'
+import { findAccountByAccountId } from '../../../../utils/account-utils'
 
 // Hooks
 import { usePreset, useBalanceUpdater, useSend } from '../../../../common/hooks'
 import { useOnClickOutside } from '../../../../common/hooks/useOnClickOutside'
-import { useSetNetworkMutation } from '../../../../common/slices/api.slice'
+import {
+  useGetSelectedAccountIdQuery,
+  useSetSelectedAccountMutation,
+  useSetNetworkMutation
+} from '../../../../common/slices/api.slice'
 
 // Styled Components
 import {
@@ -81,7 +82,6 @@ export const Send = (props: Props) => {
   } = props
 
   // Wallet Selectors
-  const selectedAccount = useUnsafeWalletSelector(WalletSelectors.selectedAccount)
   const spotPrices = useUnsafeWalletSelector(WalletSelectors.transactionSpotPrices)
   const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
   const accounts = useUnsafeWalletSelector(WalletSelectors.accounts)
@@ -95,7 +95,6 @@ export const Send = (props: Props) => {
   }>()
 
   // Hooks
-  const dispatch = useDispatch()
   useBalanceUpdater()
 
   const {
@@ -119,7 +118,9 @@ export const Send = (props: Props) => {
   } = useSend(true)
 
   // Queries & Mutations
+  const [setSelectedAccount] = useSetSelectedAccountMutation()
   const [setNetwork] = useSetNetworkMutation()
+  const { data: selectedAccountId } = useGetSelectedAccountIdQuery()
 
   // Refs
   const checksumInfoModalRef = React.useRef<HTMLDivElement>(null)
@@ -128,11 +129,15 @@ export const Send = (props: Props) => {
   const [domainPosition, setDomainPosition] = React.useState<number>(0)
   const [showChecksumInfoModal, setShowChecksumInfoModal] = React.useState<boolean>(false)
 
+  const selectedAccount = React.useMemo(() => {
+    return findAccountByAccountId(accounts, selectedAccountId)
+  }, [accounts, selectedAccountId])
 
   const onSelectPresetAmount = usePreset(
     {
       onSetAmount: setSendAmount,
-      asset: selectedSendAsset
+      asset: selectedSendAsset,
+      account: selectedAccount
     }
   )
 
@@ -338,7 +343,7 @@ export const Send = (props: Props) => {
     return sendAssetOptions.find((option) =>
       tokenId
         ? option.contractAddress.toLowerCase() ===
-            contractAddress.toLowerCase() && option.tokenId === tokenId
+        contractAddress.toLowerCase() && option.tokenId === tokenId
         : option.contractAddress.toLowerCase() === contractAddress.toLowerCase()
     )
   }, [sendAssetOptions, contractAddress, tokenId])
@@ -354,12 +359,17 @@ export const Send = (props: Props) => {
     // check if the user has selected an asset
     if (!chainId || !selectedAssetFromParams || !accountFromParams || selectedSendAsset) return
 
-    dispatch(WalletActions.selectAccount(accountFromParams.accountId))
-    setNetwork({
-      chainId: chainId,
-      coin: selectedAssetFromParams.coin
-    })
-      .catch((e) => console.error(e))
+    ;(async () => {
+      try {
+        await setSelectedAccount(accountFromParams.accountId)
+        await setNetwork({
+          chainId: chainId,
+          coin: selectedAssetFromParams.coin
+        })
+      } catch (e) {
+        console.error(e)
+      }
+    })()
 
     setSelectedSendOption(tokenId ? 'nft' : 'token')
     selectSendAsset(selectedAssetFromParams)

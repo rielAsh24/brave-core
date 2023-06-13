@@ -9,7 +9,7 @@ import { renderHook } from '@testing-library/react-hooks'
 // Mocks
 import { mockPageState } from '../../stories/mock-data/mock-page-state'
 import { mockWalletState } from '../../stories/mock-data/mock-wallet-state'
-import { mockERC20Token, mockAccount } from '../constants/mocks'
+import { mockERC20Token } from '../constants/mocks'
 // Reducers
 import { createPageReducer } from '../../page/reducers/page_reducer'
 import { createWalletReducer } from '../slices/wallet.slice'
@@ -28,18 +28,19 @@ describe('usePreset hook', () => {
   ])('should compute %s correctly', (_, balance: string, percent, expected: string) => {
     const mockFunc = jest.fn()
 
+    const walletState = { ...mockWalletState }
+    walletState.accounts[0].tokenBalanceRegistry = { [mockERC20Token.contractAddress.toLowerCase()]: balance }
+
     const store = createStore(combineReducers({
-      wallet: createWalletReducer({
-        ...mockWalletState,
-        selectedAccount: { ...mockAccount, tokenBalanceRegistry: { [mockERC20Token.contractAddress.toLowerCase()]: balance } }
-      }),
+      wallet: createWalletReducer(walletState),
       page: createPageReducer(mockPageState)
     }))
 
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
       {
         onSetAmount: mockFunc,
-        asset: mockERC20Token
+        asset: mockERC20Token,
+        account: walletState.accounts[0]
       }
     ),
       {
@@ -62,7 +63,8 @@ describe('usePreset hook', () => {
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
       {
         onSetAmount: mockOnSetFromAmount,
-        asset: undefined
+        asset: undefined,
+        account: mockWalletState.accounts[0]
       }),
       {
         wrapper: ({ children }) => <Provider store={store}>{children}</Provider>

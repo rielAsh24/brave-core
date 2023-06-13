@@ -9,34 +9,27 @@ import { BraveWallet, WalletAccountType } from '../../constants/types'
 import Amount from '../../utils/amount'
 import { getBalance } from '../../utils/balance-utils'
 
-import { WalletSelectors } from '../selectors'
-import { useUnsafeWalletSelector } from './use-safe-selector'
-
-export default function usePreset (
-  {
-    asset,
-    onSetAmount,
-    account
-  }: {
-    onSetAmount?: (value: string) => void
-    asset?: BraveWallet.BlockchainToken
-    account?: WalletAccountType
-  }
-) {
-  // redux
-  const selectedAccount = account ?? useUnsafeWalletSelector(WalletSelectors.selectedAccount)
-
+export default function usePreset({
+  asset,
+  onSetAmount,
+  account
+}: {
+  onSetAmount?: (value: string) => void
+  asset?: BraveWallet.BlockchainToken
+  account: WalletAccountType | undefined
+}) {
   return (percent: number) => {
     if (!asset) {
       return
     }
 
-    const assetBalance = getBalance(selectedAccount, asset) || '0'
+    const assetBalance = getBalance(account, asset) || '0'
     const amountWrapped = new Amount(assetBalance).times(percent)
 
-    const formattedAmount = (percent === 1)
-      ? amountWrapped.divideByDecimals(asset.decimals).format()
-      : amountWrapped.divideByDecimals(asset.decimals).format(6)
+    const formattedAmount =
+      percent === 1
+        ? amountWrapped.divideByDecimals(asset.decimals).format()
+        : amountWrapped.divideByDecimals(asset.decimals).format(6)
 
     onSetAmount?.(formattedAmount)
   }

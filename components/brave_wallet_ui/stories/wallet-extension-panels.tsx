@@ -802,7 +802,7 @@ _SetupWallet.story = {
 }
 
 export const _ConnectHardwareWallet = () => {
-  const onCancel = (accountAddress: string, coinType: BraveWallet.CoinType) => {
+  const onCancel = (account: BraveWallet.AccountInfo) => {
     // Doesn't do anything in storybook
   }
 
@@ -814,9 +814,7 @@ export const _ConnectHardwareWallet = () => {
   return (
     <StyledExtensionWrapper>
       <ConnectHardwareWalletPanel
-        walletName='Ledger 1'
-        accountAddress='0x7d66c9ddAED3115d93Bd1790332f3Cd06Cf52B14'
-        coinType={BraveWallet.CoinType.ETH}
+        account={{ ...mockAccounts[0], name: 'Ledger 1' }}
         onCancel={onCancel}
         onClickInstructions={onClickInstructions}
         hardwareWalletCode={undefined}

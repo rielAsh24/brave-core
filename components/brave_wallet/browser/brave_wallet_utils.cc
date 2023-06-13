@@ -1337,15 +1337,6 @@ void SetDefaultBaseCryptocurrency(PrefService* prefs,
   prefs->SetString(kDefaultBaseCryptocurrency, cryptocurrency);
 }
 
-mojom::CoinType GetSelectedCoin(PrefService* prefs) {
-  return static_cast<mojom::CoinType>(
-      prefs->GetInteger(kBraveWalletSelectedCoin));
-}
-
-void SetSelectedCoin(PrefService* prefs, mojom::CoinType coin) {
-  prefs->SetInteger(kBraveWalletSelectedCoin, static_cast<int>(coin));
-}
-
 std::string GetDefaultBaseCryptocurrency(PrefService* prefs) {
   return prefs->GetString(kDefaultBaseCryptocurrency);
 }
@@ -1698,6 +1689,10 @@ std::vector<mojom::KeyringId> GetSupportedKeyrings() {
 
   DCHECK_GT(ids.size(), 0u);
   return ids;
+}
+
+bool CoinSupportsDapps(mojom::CoinType coin) {
+  return coin == mojom::CoinType::ETH || coin == mojom::CoinType::SOL;
 }
 
 }  // namespace brave_wallet

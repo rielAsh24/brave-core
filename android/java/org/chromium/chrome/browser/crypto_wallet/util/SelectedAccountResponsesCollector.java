@@ -49,9 +49,10 @@ public class SelectedAccountResponsesCollector {
 
             accountsPermissionsContexts.add(accountContext);
             if (CoinType.FIL == coin) {
-                mBraveWalletService.getChainIdForActiveOrigin(CoinType.FIL, chainId -> {
-                    mKeyringService.getFilecoinSelectedAccount(chainId, accountContext);
-                });
+                mBraveWalletService.getNetworkForSelectedAccountOnActiveOrigin(
+                        CoinType.FIL, chainId -> {
+                            mKeyringService.getFilecoinSelectedAccount(chainId, accountContext);
+                        });
             } else {
                 mKeyringService.getSelectedAccount(coin, accountContext);
             }

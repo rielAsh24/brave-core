@@ -78,7 +78,7 @@ type TokenBalanceRegistry = Record<
 
 export interface WalletApiDataOverrides {
   selectedCoin?: BraveWallet.CoinType
-  selectedAccountAddress?: string
+  selectedAccountId?: BraveWallet.AccountId
   chainIdsForCoins?: Record<BraveWallet.CoinType, string>
   networks?: BraveWallet.NetworkInfo[]
   defaultBaseCurrency?: string
@@ -94,9 +94,9 @@ export class MockedWalletApiProxy {
   store = makeMockedStoreWithSpy().store
 
   defaultBaseCurrency: string = 'usd'
-  selectedCoin: BraveWallet.CoinType = BraveWallet.CoinType.ETH
-  selectedAccountAddress: string = mockAccount.address
+  selectedAccountId: BraveWallet.AccountId = mockAccount.accountId
   accountInfos: BraveWallet.AccountInfo[] = [
+    mockAccount,
     mockEthAccountInfo,
     mockSolanaAccountInfo,
     mockFilecoinAccountInfo
@@ -197,9 +197,8 @@ export class MockedWalletApiProxy {
       return
     }
 
-    this.selectedAccountAddress =
-      overrides.selectedAccountAddress ?? this.selectedAccountAddress
-    this.selectedCoin = overrides.selectedCoin ?? this.selectedCoin
+    this.selectedAccountId =
+      overrides.selectedAccountId ?? this.selectedAccountId
     this.chainIdsForCoins = overrides.chainIdsForCoins ?? this.chainIdsForCoins
     this.networks = overrides.networks ?? this.networks
     this.defaultBaseCurrency =
@@ -235,12 +234,6 @@ export class MockedWalletApiProxy {
           (t) => t.chainId === chainId && t.coin === coin
         )
       }
-    },
-    getSelectedCoin: async () => {
-      return { coin: this.selectedCoin }
-    },
-    setSelectedCoin: (coin) => {
-      this.selectedCoin = coin
     },
     getDefaultBaseCurrency: async () => ({
       currency: this.defaultBaseCurrency
@@ -302,13 +295,13 @@ export class MockedWalletApiProxy {
   keyringService: Partial<
     InstanceType<typeof BraveWallet.KeyringServiceInterface>
   > = {
-    getSelectedAccount: async () => {
-      return { address: this.selectedAccountAddress }
-    },
     getAllAccounts: async () => {
       return {
         allAccounts: {
           accounts: this.accountInfos,
+          selectedAccountId: this.selectedAccountId,
+          ethDappSelectedAccountId: this.selectedAccountId,
+          solDappSelectedAccountId: mockSolanaAccountInfo.accountId
         }
       }
     },
@@ -392,7 +385,6 @@ export class MockedWalletApiProxy {
       return { network: this.chainsForCoins[coin] }
     },
     setNetwork: async (chainId, coin) => {
-      this.selectedCoin = coin
       this.chainIdsForCoins[coin] = chainId
       const foundNetwork = this.networks.find(
         (net) => net.chainId === chainId && net.coin === coin

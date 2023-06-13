@@ -16,18 +16,20 @@ import usePricing from './pricing'
 
 // utils
 import { getBalance } from '../../utils/balance-utils'
-import { useGetSelectedChainQuery } from '../slices/api.slice'
+import { useGetSelectedAccountIdQuery, useGetSelectedChainQuery } from '../slices/api.slice'
+import { findAccountByAccountId } from '../../utils/account-utils'
 
 export function useAssets () {
   // redux
   const {
-    selectedAccount,
+    accounts,
     userVisibleTokensInfo,
     transactionSpotPrices: spotPrices
   } = useSelector((state: { wallet: WalletState }) => state.wallet)
 
   // queries
   const { data: selectedNetwork } = useGetSelectedChainQuery()
+  const { data: selectedAccountId } = useGetSelectedAccountIdQuery()
 
   // custom hooks
   const { computeFiatAmount } = usePricing(spotPrices)
@@ -44,6 +46,10 @@ export function useAssets () {
       token.coin === selectedNetwork.coin
     )
   }, [userVisibleTokensInfo, selectedNetwork])
+
+  const selectedAccount = React.useMemo(() => {
+    return findAccountByAccountId(accounts, selectedAccountId)
+  }, [accounts, selectedAccountId])
 
   const assetsByValueAndNetwork = React.useMemo(() => {
     if (!assetsByNetwork?.length) {

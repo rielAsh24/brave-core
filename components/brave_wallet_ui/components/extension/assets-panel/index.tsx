@@ -7,9 +7,8 @@ import * as React from 'react'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 
 import {
-  WalletRoutes,
-  WalletAccountType,
-  BraveWallet
+  BraveWallet,
+  WalletRoutes
 } from '../../../constants/types'
 
 // utils
@@ -37,8 +36,9 @@ import {
 
 import { PortfolioAssetItem } from '../../desktop'
 import { getAssetIdKey } from '../../../utils/asset-utils'
+
 export interface Props {
-  selectedAccount?: WalletAccountType
+  selectedAccount?: BraveWallet.AccountInfo
   onAddAsset: () => void
 }
 

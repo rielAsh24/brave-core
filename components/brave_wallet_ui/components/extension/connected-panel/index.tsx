@@ -20,6 +20,7 @@ import { CopyTooltip } from '../../shared/copy-tooltip/copy-tooltip'
 import { getLocale } from '../../../../common/locale'
 import { reduceAddress } from '../../../utils/reduce-address'
 import { reduceAccountDisplayName } from '../../../utils/reduce-account-name'
+import { findAccountByAccountId } from '../../../utils/account-utils'
 import Amount from '../../../utils/amount'
 import { deserializeOrigin } from '../../../utils/model-serialization-utils'
 import { makeNetworkAsset } from '../../../options/asset-options'
@@ -27,6 +28,7 @@ import { makeNetworkAsset } from '../../../options/asset-options'
 // Hooks
 import { useExplorer, usePricing } from '../../../common/hooks'
 import { useGetSelectedChainQuery } from '../../../common/slices/api.slice'
+import { useSelectedAccountQuery } from '../../../common/slices/api.slice.extra'
 import { useApiProxy } from '../../../common/hooks/use-api-proxy'
 import {
   useScopedBalanceUpdater
@@ -81,13 +83,13 @@ export const ConnectedPanel = (props: Props) => {
     defaultCurrencies,
     transactionSpotPrices: spotPrices,
     activeOrigin: originInfo,
-    selectedAccount,
     connectedAccounts
   } = useSelector(({ wallet }: { wallet: WalletState }) => wallet)
 
   // queries
   const { currentData: selectedNetwork } = useGetSelectedChainQuery(undefined)
   const selectedCoin = selectedNetwork?.coin
+  const { data: selectedAccount } = useSelectedAccountQuery()
 
   const networkAsset = React.useMemo(() =>
     makeNetworkAsset(selectedNetwork),
@@ -114,6 +116,7 @@ export const ConnectedPanel = (props: Props) => {
   const [isPermissionDenied, setIsPermissionDenied] = React.useState<boolean>(false)
 
   // computed
+  // TODO(apaymyshev): handle bitcoin address
   const selectedAccountAddress = selectedAccount?.address || ''
   const selectedAccountName = selectedAccount?.name || ''
 
@@ -224,15 +227,18 @@ export const ConnectedPanel = (props: Props) => {
   ])
 
   const isConnected = React.useMemo((): boolean => {
+    if (!selectedAccount) {
+      return false
+    }
     if (selectedCoin === BraveWallet.CoinType.SOL) {
       return isSolanaConnected
     }
     if (originInfo.originSpec === WalletOrigin) {
       return true
     } else {
-      return connectedAccounts.some(account => account.address === selectedAccountAddress)
+      return !!findAccountByAccountId(connectedAccounts, selectedAccount.accountId)
     }
-  }, [connectedAccounts, selectedAccountAddress, originInfo, selectedCoin, isSolanaConnected])
+  }, [connectedAccounts, selectedAccount, originInfo, selectedCoin, isSolanaConnected])
 
   const connectedStatusText = React.useMemo((): string => {
     if (isPermissionDenied) {
