@@ -1,102 +1,12 @@
 diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
-index 53db095c1b1efa8ae71ee0051d7d35c6a95d9828..8459a79978989e94f61315ebeacdff23a51da5df 100644
+index 23a8da453c3d29ab8efeacbb7da6e01e280afd55..00979b0581ae8ec9b060f41f980562db6013b102 100644
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
-@@ -260,6 +260,7 @@ config("compiler") {
-   cflags_cc = []
-   cflags_objc = []
-   cflags_objcc = []
-+  rustflags = []
-   ldflags = []
-   defines = []
-   configs = []
-@@ -450,6 +451,7 @@ config("compiler") {
-     asmflags += [ "-fPIC" ]
-     cflags += [ "-fPIC" ]
-     ldflags += [ "-fPIC" ]
-+    rustflags += [ "-Crelocation-model=pic" ]
- 
-     if (!is_clang) {
-       # Use pipes for communicating between sub-processes. Faster.
-@@ -740,6 +742,15 @@ config("compiler") {
-     # arm32.
-     if (!is_android || current_cpu == "arm64") {
-       cflags += [ "-fwhole-program-vtables" ]
-+
-+      # whole-program-vtables implies -fsplit-lto-unit, and Rust needs to match
-+      # behaviour. Rust needs to know the linker will be doing LTO in this case
-+      # or it rejects the Zsplit-lto-unit flag.
-+      rustflags += [
-+        "-Zsplit-lto-unit",
-+        "-Clinker-plugin-lto=yes",
-+      ]
-+
-       if (!is_win) {
-         ldflags += [ "-fwhole-program-vtables" ]
-       }
-@@ -861,7 +872,7 @@ config("compiler") {
- 
-   # Rust compiler flags setup.
-   # ---------------------------
--  rustflags = [
-+  rustflags += [
-     # Overflow checks are optional in Rust, but even if switched
-     # off they do not cause undefined behavior (the overflowing
-     # behavior is defined). Because containers are bounds-checked
-@@ -906,6 +917,17 @@ config("compiler") {
-   if (is_official_build) {
-     rustflags += [ "-Ccodegen-units=1" ]
+@@ -1005,6 +1005,7 @@ config("compiler") {
+       "-Zpanic_abort_tests",
+     ]
    }
-+  if (!rust_prebuilt_stdlib) {
-+    # When building against the Chromium Rust stdlib (which we compile) always
-+    # abort instead of unwinding when panic occurs. In official builds, panics
-+    # abort immediately (this is configured in the stdlib) to keep binary size
-+    # down. So we unconditionally match behaviour in unofficial too.
-+    rustflags += [
-+      "-Cpanic=abort",
-+      "-Zpanic_abort_tests",
-+    ]
-+  }
 +  rustflags -= brave_remove_rustflags
  }
  
- # Defers LTO optimization to the linker, for use when:
-@@ -2448,7 +2470,7 @@ config("symbols") {
-       if (use_dwarf5) {
-         cflags += [ "-gdwarf-5" ]
-         rustflags += [ "-Zdwarf-version=5" ]
--      } else if (!is_apple) {
-+      } else {
-         # Recent clang versions default to DWARF5 on Linux, and Android is about
-         # to switch. TODO: Adopt that in controlled way.
-         # Apple platforms still default to 4, so the flag is not needed there.
-@@ -2551,6 +2573,7 @@ config("symbols") {
- # This config guarantees to hold symbol for stack trace which are shown to user
- # when crash happens in unittests running on buildbot.
- config("minimal_symbols") {
-+  rustflags = [ "-Cdebuginfo=1" ]
-   if (is_win) {
-     # Functions, files, and line tables only.
-     cflags = []
-@@ -2578,11 +2601,13 @@ config("minimal_symbols") {
-       # at least 10.11.
-       # TODO(thakis): Remove this once mac_deployment_target is 10.11.
-       cflags += [ "-gdwarf-4" ]
-+      rustflags += [ "-Zdwarf-version=4" ]
-     } else if (!use_dwarf5 && !is_nacl && current_os != "aix") {
-       # On aix -gdwarf causes linker failures due to thread_local variables.
-       # Recent clang versions default to DWARF5 on Linux, and Android is about
-       # to switch. TODO: Adopt that in controlled way.
-       cflags += [ "-gdwarf-4" ]
-+      rustflags += [ "-Zdwarf-version=4" ]
-     }
- 
-     if (use_dwarf5 && !is_nacl) {
-@@ -2618,7 +2643,6 @@ config("minimal_symbols") {
- 
-     asmflags = cflags
-   }
--  rustflags = [ "-Cdebuginfo=1" ]
- }
- 
- # This configuration contains function names only. That is, the compiler is
+ # The BUILDCONFIG file sets this config on targets by default, which means when
