@@ -596,6 +596,12 @@ void AdsServiceImpl::InitializePrefChangeRegistrar() {
                           base::Unretained(this)));
 
   pref_change_registrar_.Add(
+      prefs::kSubdivisionTargetingSubdivision,
+      base::BindRepeating(&AdsServiceImpl::NotifyPrefChanged,
+                          base::Unretained(this),
+                          prefs::kSubdivisionTargetingSubdivision));
+
+  pref_change_registrar_.Add(
       prefs::kSubdivisionTargetingAutoDetectedSubdivision,
       base::BindRepeating(&AdsServiceImpl::NotifyPrefChanged,
                           base::Unretained(this),
@@ -1076,6 +1082,12 @@ int64_t AdsServiceImpl::GetMaximumNotificationAdsPerHour() const {
   return ads_per_hour;
 }
 
+void AdsServiceImpl::SetMaximumNotificationAdsPerHour(
+    const int64_t ads_per_hour) {
+  SetInt64Pref(prefs::kMaximumNotificationAdsPerHour, ads_per_hour);
+}
+
+>>>>>>> 24a34304e7 (Deprecate Brave Ads SetSubdivisionTargetingCode and access the pref directly)
 bool AdsServiceImpl::NeedsBrowserUpgradeToServeAds() const {
   return needs_browser_upgrade_to_serve_ads_;
 }

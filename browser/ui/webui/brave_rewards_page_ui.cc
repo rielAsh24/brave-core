@@ -1420,7 +1420,7 @@ void RewardsDOMHandler::SaveAdsSetting(const base::Value::List& args) {
     prefs->SetInt64(brave_ads::prefs::kMaximumNotificationAdsPerHour,
                     int64_value);
   } else if (key == kAdsSubdivisionTargeting) {
-    ads_service_->SetSubdivisionTargetingCode(value);
+    prefs->SetString(brave_ads::prefs::kSubdivisionTargetingSubdivision, value);
   } else if (key == kAutoDetectedSubdivisionTargeting) {
     prefs->SetString(
         brave_ads::prefs::kSubdivisionTargetingAutoDetectedSubdivision, value);
