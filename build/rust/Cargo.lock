@@ -981,12 +981,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "fvm_ipld_encoding"
-version = "0.3.3"
-source = "git+https://github.com/brave/ref-fvm?branch=3.2.0_downgraded_deps#121684f16868048528ec2124abbc45987f1e517a"
+name = "fvm_ipld_blockstore"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1985eae58ec2fbf54535ce115c72a2141459fb7fb4ff7379e17bffae0e302578"
 dependencies = [
  "anyhow",
  "cid",
+]
+
+[[package]]
+name = "fvm_ipld_encoding"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0816a2a6df4853de08a723d261110d56a121aa313bc570fe9d248f0a4bc5288"
+dependencies = [
+ "anyhow",
+ "cid",
+ "fvm_ipld_blockstore",
  "multihash",
  "serde",
  "serde_ipld_dagcbor",
@@ -998,7 +1010,8 @@ dependencies = [
 [[package]]
 name = "fvm_shared"
 version = "3.2.0"
-source = "git+https://github.com/brave/ref-fvm?branch=3.2.0_downgraded_deps#121684f16868048528ec2124abbc45987f1e517a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "674e86afc2ce02808d24f578296f105b13c23300e60e0eac331c4c1575beabb5"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1475,15 +1488,19 @@ dependencies = [
 
 [[package]]
 name = "multihash"
-version = "0.16.2"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3db354f401db558759dfc1e568d010a5d4146f4d3f637be1275ec4a3cf09689"
+checksum = "1c346cf9999c631f002d8f977c4eaeaa0e6386f16007202308d0b3757522c2cc"
 dependencies = [
  "blake2b_simd",
  "core2",
+ "digest 0.10.3",
  "multihash-derive",
+ "ripemd",
  "serde",
  "serde-big-array",
+ "sha2 0.10.1",
+ "sha3",
  "unsigned-varint",
 ]
 
@@ -2126,6 +2143,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
+name = "ripemd"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1facec54cb5e0dc08553501fa740091086d0259ad0067e0d4103448e4cb22ed3"
+dependencies = [
+ "digest 0.10.3",
+]
+
+[[package]]
 name = "rmp"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2287,9 +2313,9 @@ dependencies = [
 
 [[package]]
 name = "serde_ipld_dagcbor"
-version = "0.2.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "889f466a1d9bec32b6142e9ed148171c5976ba31b2daffce9719a7fcb00197d9"
+checksum = "c1e23de7a4a18dff77ab9531f279a882500b8cf3549fde044d4e10481b411f1e"
 dependencies = [
  "cbor4ii",
  "cid",
@@ -2372,6 +2398,16 @@ dependencies = [
  "cfg-if 1.0.0",
  "cpufeatures",
  "digest 0.10.3",
+]
+
+[[package]]
+name = "sha3"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c8942507eb1007836ca7e42a27a080d133354ecc220689e6e53bc4ce391b6e9"
+dependencies = [
+ "digest 0.10.3",
+ "keccak",
 ]
 
 [[package]]
