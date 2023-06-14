@@ -182,6 +182,11 @@ const defaultState: WalletState = {
       LOCAL_STORAGE_KEYS
         .HIDE_PORTFOLIO_SMALL_BALANCES
     ) === 'true',
+  showNetworkLogoOnNfts: window.localStorage
+    .getItem(
+      LOCAL_STORAGE_KEYS
+        .SHOW_NETWORK_LOGO_ON_NFTS
+    ) === 'true'
 }
 
 // async actions
@@ -502,6 +507,14 @@ export const createWalletSlice = (initialState: WalletState = defaultState) => {
           { payload }: PayloadAction<boolean>
         ) {
         state.hidePortfolioSmallBalances = payload
+      },
+
+      setShowNetworkLogoOnNfts
+        (
+          state: WalletState,
+          { payload }: PayloadAction<boolean>
+        ) {
+        state.showNetworkLogoOnNfts = payload
       },
 
       setIsFetchingPortfolioPriceHistory

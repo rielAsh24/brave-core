@@ -42,6 +42,7 @@ export const filteredOutPortfolioAccountAddresses = ({ wallet }: State) =>
   wallet.filteredOutPortfolioAccountAddresses
 export const hidePortfolioSmallBalances = ({ wallet }: State) =>
   wallet.hidePortfolioSmallBalances
+export const showNetworkLogoOnNfts = ({ wallet }: State) => wallet.showNetworkLogoOnNfts
 
 // unsafe selectors (will cause re-render if not strictly equal "===") (objects and lists)
 export const accounts = ({ wallet }: State) => wallet.accounts
