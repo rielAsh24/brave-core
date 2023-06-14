@@ -387,14 +387,10 @@ export const PortfolioAsset = (props: Props) => {
       history.push(WalletRoutes.Market)
       return
     }
-    if (isNftAsset) {
-      history.push(WalletRoutes.PortfolioNFTs)
-      return
-    }
+    
     history.push(WalletRoutes.PortfolioAssets)
   }, [
     isShowingMarketData,
-    isNftAsset,
     userAssetList,
     selectedTimeline
   ])
