@@ -20,7 +20,7 @@ SyntheticDataset::SyntheticDataset(std::vector<std::vector<float>> data_points)
 
 SyntheticDataset::SyntheticDataset(
     const std::vector<std::vector<float>>& weights,
-    const std::vector<float>& b,
+    const std::vector<float>& bias,
     int num_features,
     size_t size) {
   // Generate time of day and day of week uniformly.
@@ -59,7 +59,7 @@ SyntheticDataset::SyntheticDataset(
   std::vector<std::vector<float>> data_points;
   for (size_t i = 0; i < size; i++) {
     std::vector<float> y_s = LinearAlgebraUtil::AddVectors(
-        LinearAlgebraUtil::MultiplyMatrixVector(weights, xs[i]), b);
+        LinearAlgebraUtil::MultiplyMatrixVector(weights, xs[i]), bias);
     DCHECK_EQ(y_s.size(), 2U);
 
     float y_max = 0.0;
@@ -138,9 +138,7 @@ std::vector<Weights> SyntheticDataset::GetDefaultWeights() {
 }
 
 std::vector<float> SyntheticDataset::GetDefaultBias() {
-  std::vector<float> bias = {-1.45966, 1.12165};
-
-  return bias;
+  return {-1.45966, 1.12165};
 }
 
 }  // namespace brave_federated

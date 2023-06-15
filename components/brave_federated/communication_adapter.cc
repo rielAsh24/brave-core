@@ -140,7 +140,7 @@ void CommunicationAdapter::OnGetTasks(
   VLOG(1) << "Failed to request tasks. Response code: " << response_code;
 }
 
-void CommunicationAdapter::UploadTaskResult(TaskResult result,
+void CommunicationAdapter::UploadTaskResult(const TaskResult& result,
                                             UploadResultCallback callback) {
   auto request = std::make_unique<network::ResourceRequest>();
   request->url = GURL(features::GetFederatedLearningResultsEndpoint());

@@ -33,7 +33,7 @@ std::string BuildGetTasksPayload() {
   return request;
 }
 
-absl::optional<Task> ParseTask(flower::TaskIns task_instruction) {
+absl::optional<Task> ParseTask(const flower::TaskIns& task_instruction) {
   const std::string& id = task_instruction.task_id();
   const std::string& group_id = task_instruction.group_id();
   const std::string& workload_id = task_instruction.workload_id();
@@ -60,7 +60,7 @@ absl::optional<Task> ParseTask(flower::TaskIns task_instruction) {
   std::vector<Weights> parameters;
   Configs config;
   if (message.has_fit_ins()) {
-    type = TaskType::Training;
+    type = TaskType::kTraining;
 
     if (!message.fit_ins().has_parameters()) {
       VLOG(2) << "Parameters are missing from fit instruction";
@@ -73,7 +73,7 @@ absl::optional<Task> ParseTask(flower::TaskIns task_instruction) {
     }
     config = ConfigsFromProto(message.fit_ins().config());
   } else if (message.has_evaluate_ins()) {
-    type = TaskType::Evaluation;
+    type = TaskType::kEvaluation;
 
     if (!message.evaluate_ins().has_parameters()) {
       VLOG(2) << "Parameters are missing from eval instruction";
@@ -133,7 +133,7 @@ std::string BuildUploadTaskResultsPayload(const TaskResult& result) {
   flower::Task flower_task;
   // Client Message Creation
   flower::ClientMessage client_message;
-  if (task_type == TaskType::Training) {
+  if (task_type == TaskType::kTraining) {
     flower::ClientMessage_FitRes fit_res;
     fit_res.set_num_examples(report.dataset_size);
     *fit_res.mutable_parameters() = GetParametersFromVectors(report.parameters);

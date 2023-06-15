@@ -12,15 +12,16 @@
 
 #include "brave/third_party/flower/src/proto/flwr/proto/fleet.pb.h"
 #include "brave/third_party/flower/src/proto/flwr/proto/transport.pb.h"
+#include "third_party/abseil-cpp/absl/types/optional.h"
 
 class ScalarValue {
  public:
   // Getters
-  std::optional<bool> GetBool() { return bool_value_; }
-  std::optional<std::string> GetBytes() { return bytes_value_; }
-  std::optional<double> GetDouble() { return double_value_; }
-  std::optional<int> GetInt() { return integer_value_; }
-  std::optional<std::string> GetString() { return string_value_; }
+  absl::optional<bool> GetBool() { return bool_value_; }
+  absl::optional<std::string> GetBytes() { return bytes_value_; }
+  absl::optional<double> GetDouble() { return double_value_; }
+  absl::optional<int> GetInt() { return integer_value_; }
+  absl::optional<std::string> GetString() { return string_value_; }
 
   // Setters
   void SetBool(bool b) { this->bool_value_ = b; }
@@ -30,11 +31,11 @@ class ScalarValue {
   void SetString(std::string string) { this->string_value_ = string; }
 
  private:
-  std::optional<bool> bool_value_ = std::nullopt;
-  std::optional<std::string> bytes_value_ = std::nullopt;
-  std::optional<double> double_value_ = std::nullopt;
-  std::optional<int> integer_value_ = std::nullopt;
-  std::optional<std::string> string_value_ = std::nullopt;
+  absl::optional<bool> bool_value_;
+  absl::optional<std::string> bytes_value_;
+  absl::optional<double> double_value_;
+  absl::optional<int> integer_value_;
+  absl::optional<std::string> string_value_;
 };
 
 using Configs = std::map<std::string, float>;

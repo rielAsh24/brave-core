@@ -7,27 +7,25 @@
 
 #include <sstream>
 
-#include "brave/third_party/flower/src/proto/flwr/proto/transport.pb.h"
-
 flower::Scalar ScalarToProto(ScalarValue scalar_msg) {
   flower::Scalar s;
-  if (scalar_msg.GetBool() != std::nullopt) {
+  if (scalar_msg.GetBool() != absl::nullopt) {
     s.set_bool_(scalar_msg.GetBool().value());
     return s;
   }
-  if (scalar_msg.GetBytes() != std::nullopt) {
+  if (scalar_msg.GetBytes() != absl::nullopt) {
     s.set_bytes(scalar_msg.GetBytes().value());
     return s;
   }
-  if (scalar_msg.GetDouble() != std::nullopt) {
+  if (scalar_msg.GetDouble() != absl::nullopt) {
     s.set_double_(scalar_msg.GetDouble().value());
     return s;
   }
-  if (scalar_msg.GetInt() != std::nullopt) {
+  if (scalar_msg.GetInt() != absl::nullopt) {
     s.set_int64(scalar_msg.GetInt().value());
     return s;
   }
-  if (scalar_msg.GetString() != std::nullopt) {
+  if (scalar_msg.GetString() != absl::nullopt) {
     s.set_string(scalar_msg.GetString().value());
     return s;
   }

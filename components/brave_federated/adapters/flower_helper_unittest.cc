@@ -73,7 +73,7 @@ TEST(BraveFederatedLearningFlowerHelperTest, ParseFitTaskListFromResponseBody) {
   EXPECT_EQ(task_id.family_id, "8");
 
   TaskType task_type = task.GetType();
-  EXPECT_EQ(task_type, TaskType::Training);
+  EXPECT_EQ(task_type, TaskType::kTraining);
 
   std::vector<Weights> task_parameters = task.GetParameters();
   EXPECT_EQ(task_parameters.size(), 2U);
@@ -122,7 +122,7 @@ TEST(BraveFederatedLearningFlowerHelperTest,
   EXPECT_EQ(task_id.family_id, "8");
 
   TaskType task_type = task.GetType();
-  EXPECT_EQ(task_type, TaskType::Evaluation);
+  EXPECT_EQ(task_type, TaskType::kEvaluation);
 
   std::vector<Weights> task_parameters = task.GetParameters();
   EXPECT_EQ(task_parameters.size(), 2U);
@@ -194,7 +194,7 @@ TEST(BraveFederatedLearningFlowerHelperTest,
 TEST(BraveFederatedLearningFlowerHelperTest, BuildPostTrainTaskResultsPayload) {
   // Arrange
   TaskId task_id = {"42", "23", "8"};
-  TaskType task_type = TaskType::Training;
+  TaskType task_type = TaskType::kTraining;
   Task task = Task(task_id, task_type, "", {}, {});
 
   size_t dataset_size = 500;
@@ -239,7 +239,7 @@ TEST(BraveFederatedLearningFlowerHelperTest,
      BuildPostEvaluateTaskResultsPayload) {
   // Arrange
   TaskId task_id = {"42", "23", "8"};
-  TaskType task_type = TaskType::Evaluation;
+  TaskType task_type = TaskType::kEvaluation;
   Task task = Task(task_id, task_type, "", {}, {});
 
   size_t dataset_size = 500;
