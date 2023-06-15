@@ -222,11 +222,12 @@ void AIChatTabHelper::GenerateQuestions() {
       base::BindOnce(
           [](base::WeakPtr<AIChatTabHelper> tab_helper,
              int64_t navigation_id_for_query,
-             api_request_helper::APIRequestResult result, bool success) {
+             api_request_helper::APIRequestResult result) {
             if (!tab_helper) {
               VLOG(1) << "TabHelper was deleted before API call completed";
               return;
             }
+            auto success = result.Is2XXResponseCode();
             if (!success) {
               LOG(ERROR) << "Error getting question suggestions. Code: "
                          << result.response_code();
