@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/ui/views/location_bar/location_bar_view.cc b/chrome/browser/ui/views/location_bar/location_bar_view.cc
-index f5f366196814f2566920b6fa6bfd7de83c5a40f5..94b6f1ccd9ad54f7b1eccfcecaf4272d5c818adf 100644
+index d9333681781143c3086d4b68b63b264d459d1a5d..cd01dcc178837a5c0e7138501bacabd89c2100e7 100644
 --- a/chrome/browser/ui/views/location_bar/location_bar_view.cc
 +++ b/chrome/browser/ui/views/location_bar/location_bar_view.cc
-@@ -719,6 +719,7 @@ void LocationBarView::Layout() {
+@@ -722,6 +722,7 @@ void LocationBarView::Layout() {
      }
    };
  
