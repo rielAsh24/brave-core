@@ -37,18 +37,28 @@ AIChatTabHelper::AIChatTabHelper(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
       content::WebContentsUserData<AIChatTabHelper>(*web_contents),
       pref_service_(
-          *user_prefs::UserPrefs::Get(web_contents->GetBrowserContext())) {
+          user_prefs::UserPrefs::Get(web_contents->GetBrowserContext())) {
+  DCHECK(pref_service_);
   ai_chat_api_ =
       std::make_unique<AIChatAPI>(web_contents->GetBrowserContext()
                                       ->GetDefaultStoragePartition()
                                       ->GetURLLoaderFactoryForBrowserProcess());
-  // TODO(petemill): Observe opt-in - don't send any requests before opt-in
 }
 
 AIChatTabHelper::~AIChatTabHelper() = default;
 
 const std::vector<ConversationTurn>& AIChatTabHelper::GetConversationHistory() {
   return chat_history_;
+}
+
+void AIChatTabHelper::OnConversationActiveChanged(bool is_conversation_active) {
+  is_conversation_active_ = is_conversation_active;
+  DVLOG(3) << "Conversation active changed: " << is_conversation_active;
+  if (article_text_.empty() &&
+      web_contents()->IsDocumentOnLoadCompletedInPrimaryMainFrame()) {
+    // When the UI opens, get the page content
+    GeneratePageText();
+  }
 }
 
 bool AIChatTabHelper::HasUserOptedIn() {
@@ -103,6 +113,7 @@ void AIChatTabHelper::RemoveObserver(Observer* observer) {
 }
 
 void AIChatTabHelper::GeneratePageText() {
+  DCHECK(HasUserOptedIn());
   auto* primary_rfh = web_contents()->GetPrimaryMainFrame();
 
   if (!primary_rfh) {
@@ -110,13 +121,19 @@ void AIChatTabHelper::GeneratePageText() {
                "primary main frame";
     return;
   }
-  FetchPageContent(web_contents(),
-                   base::BindOnce(&AIChatTabHelper::OnTabContentRetrieved,
-                                  weak_ptr_factory_.GetWeakPtr()));
+  FetchPageContent(
+      web_contents(),
+      base::BindOnce(&AIChatTabHelper::OnTabContentRetrieved,
+                     weak_ptr_factory_.GetWeakPtr(), current_navigation_id_));
 }
 
-void AIChatTabHelper::OnTabContentRetrieved(std::string contents_text,
+void AIChatTabHelper::OnTabContentRetrieved(int64_t for_navigation_id,
+                                            std::string contents_text,
                                             bool is_video) {
+  if (for_navigation_id != current_navigation_id_) {
+    VLOG(1) << __func__ << " for a different navigation. Ignoring.";
+    return;
+  }
   if (contents_text.empty()) {
     VLOG(1) << __func__ << ": No data";
     return;
@@ -149,11 +166,8 @@ void AIChatTabHelper::OnTabContentRetrieved(std::string contents_text,
                                               : "Summarize this page");
   OnSuggestedQuestionsChanged();
   // Automatically fetch questions related to page content, if allowed
-  // TODO(petemill): only if a panel is open for this tab. The event should be
-  // sent to the panel, and the panel should make the request, to verify the
-  // panel is open.
   bool can_auto_fetch_questions =
-      HasUserOptedIn() &&
+      HasUserOptedIn() && is_conversation_active_ &&
       pref_service_->GetBoolean(
           ai_chat::prefs::kBraveChatAutoGenerateQuestions) &&
       !article_text_.empty() && (suggested_questions_.size() <= 1);
@@ -221,10 +235,16 @@ void AIChatTabHelper::GenerateQuestions() {
       prompt,
       base::BindOnce(
           [](base::WeakPtr<AIChatTabHelper> tab_helper,
-             int64_t navigation_id_for_query,
+             int64_t for_navigation_id,
              api_request_helper::APIRequestResult result) {
             if (!tab_helper) {
               VLOG(1) << "TabHelper was deleted before API call completed";
+              return;
+            }
+            // We might have navigated away whilst this async operation is in
+            // progress, so check if we're the same navigation.
+            if (for_navigation_id != tab_helper->current_navigation_id_) {
+              VLOG(1) << __func__ << " for a different navigation. Ignoring.";
               return;
             }
             auto success = result.Is2XXResponseCode();
@@ -250,21 +270,13 @@ void AIChatTabHelper::GenerateQuestions() {
 
             DVLOG(2) << "Received " << (success ? "success" : "failed")
                      << " suggested questions response: " << completion;
-            // We might have navigated away whilst this async operation is in
-            // progress, so check if we're the same navigation.
-            if (tab_helper->current_navigation_id_ != navigation_id_for_query) {
-              VLOG(1) << "Navigation id was different: "
-                      << tab_helper->current_navigation_id_ << " "
-                      << navigation_id_for_query;
-              return;
-            }
             // Parse questions
             auto questions = base::SplitString(
                 *completion, "|", base::WhitespaceHandling::TRIM_WHITESPACE,
                 base::SplitResult::SPLIT_WANT_NONEMPTY);
-            for (auto question : questions) {
-              tab_helper->suggested_questions_.emplace_back(question);
-            }
+            tab_helper->suggested_questions_.insert(
+                tab_helper->suggested_questions_.end(), questions.begin(),
+                questions.end());
             // Notify observers
             tab_helper->OnSuggestedQuestionsChanged();
             DVLOG(2) << "Got questions:"
@@ -333,14 +345,13 @@ void AIChatTabHelper::MakeAPIRequestWithConversationHistoryUpdate(
   }
 
   DCHECK(ai_chat_api_);
-
-  auto data_received_callback =
-      base::BindRepeating(&AIChatTabHelper::OnAPIStreamDataReceived,
-                          weak_ptr_factory_.GetWeakPtr());
+  auto data_received_callback = base::BindRepeating(
+      &AIChatTabHelper::OnAPIStreamDataReceived, weak_ptr_factory_.GetWeakPtr(),
+      current_navigation_id_);
 
   auto data_completed_callback =
       base::BindOnce(&AIChatTabHelper::OnAPIStreamDataComplete,
-                     weak_ptr_factory_.GetWeakPtr());
+                     weak_ptr_factory_.GetWeakPtr(), current_navigation_id_);
 
   is_request_in_progress_ = true;
   ai_chat_api_->QueryPrompt(std::move(prompt),
@@ -355,7 +366,12 @@ bool AIChatTabHelper::IsRequestInProgress() {
 }
 
 void AIChatTabHelper::OnAPIStreamDataReceived(
+    int64_t for_navigation_id,
     data_decoder::DataDecoder::ValueOrError result) {
+  if (for_navigation_id != current_navigation_id_) {
+    VLOG(1) << __func__ << " for a different navigation. Ignoring.";
+    return;
+  }
   if (!result.has_value() || !result->is_dict()) {
     return;
   }
@@ -372,7 +388,12 @@ void AIChatTabHelper::OnAPIStreamDataReceived(
 }
 
 void AIChatTabHelper::OnAPIStreamDataComplete(
+    int64_t for_navigation_id,
     api_request_helper::APIRequestResult result) {
+  if (for_navigation_id != current_navigation_id_) {
+    VLOG(1) << __func__ << " for a different navigation. Ignoring.";
+    return;
+  }
   const bool success = result.Is2XXResponseCode();
   if (success) {
     // We're checking for a value body in case for non-streaming API results.
@@ -412,6 +433,9 @@ void AIChatTabHelper::OnSuggestedQuestionsChanged() {
 
 void AIChatTabHelper::DidFinishNavigation(
     content::NavigationHandle* navigation_handle) {
+  // Store current navigation ID of the main document
+  // so that we can ignore async responses against any navigated-away-from
+  // documents.
   if (!navigation_handle->IsInMainFrame() ||
       navigation_handle->IsSameDocument()) {
     return;
@@ -422,7 +446,6 @@ void AIChatTabHelper::DidFinishNavigation(
 }
 
 void AIChatTabHelper::PrimaryPageChanged(content::Page& page) {
-  // TODO(nullhook): Cancel inflight API request
   CleanUp();
 }
 
@@ -431,7 +454,9 @@ void AIChatTabHelper::DocumentOnLoadCompletedInPrimaryMainFrame() {
   // TODO(petemill): If there are other navigation events to also
   // check if content is available at, then start a queue and make
   // sure we don't have multiple async distills going on at the same time.
-  GeneratePageText();
+  if (HasUserOptedIn() && is_conversation_active_) {
+    GeneratePageText();
+  }
 }
 
 void AIChatTabHelper::WebContentsDestroyed() {
